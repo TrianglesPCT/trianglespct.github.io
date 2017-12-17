@@ -6,11 +6,11 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Comehither</title>
-  <meta name="description" content="Game Dev and Programming">
+  <title>AVX2 Gather Performance</title>
+  <meta name="description" content="Masked Gather vs Unmasked Gather">
 
   <link rel="stylesheet" href="/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/">
+  <link rel="canonical" href="http://localhost:4000/avx/2017/10/15/AVX2-Gather.html">
   <link rel="alternate" type="application/rss+xml" title="Comehither" href="/feed.xml">
   
   
@@ -67,56 +67,55 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="home">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
 
-  <h1 class="page-heading">Posts</h1>
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">AVX2 Gather Performance</h1>
+    <p class="post-meta">
+      <time datetime="2017-10-15T11:20:08-06:00" itemprop="datePublished">
+        
+        Oct 15, 2017
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Masked Gather vs Unmasked Gather</p>
+
+<p>AVX2 has masked gather instructions(_mm_mask_i32gather_epi32 etc), these have two additional parameters, a mask, and a default value that is used when the mask is false.</p>
+
+<p>I was hoping masked gathers would be accelerated, such that when most of the lanes were masked off, the gather would complete sooner, but this does not appear to be the case.</p>
+
+<p>The performance of masked and unmasked gathers was very similar, but masked gathers were consistently slower than unmasked gathers.</p>
+
+<p>Load vs Gather vs Software Gather</p>
+
+<p>To compare gather with load, I created a buffer and run through it in linear order summing the values.
+ I forced the gathers to load from the same indices the load was operating on.  Indices(0,1,2,3,4,5,6,7), incremented by 8 for each loop.</p>
+
+<p>Software gather loaded each index using scalar loads instead of the hardware intrinsics.
+Gather was generally ~1.2-1.5x faster than software gather.</p>
+
+<p>Performance was depended upon the cache level that buffer fit into.</p>
+
+<p>Buffer fits in L1</p>
+
+<p>Load is ~10x faster than Gather</p>
+
+<p>Buffer fits in L2</p>
+
+<p>Load is ~3.5x faster than Gather</p>
+
+<p>Buffer greater than L2</p>
+
+<p>Load tapers off to ~2.x faster than Gather</p>
+
+<p>This was all run on a Haswell, newer chips might perform differently.</p>
+
+  </div>
+
   
-  
-
-
-  <ul class="post-list">
-    
-      <li>
-        
-        <span class="post-meta">Nov 5, 2017</span>
-
-        <h2>
-          <a class="post-link" href="/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html">Higher Quality Vertex Normals</a>
-        </h2>
-      </li>
-    
-      <li>
-        
-        <span class="post-meta">Nov 1, 2017</span>
-
-        <h2>
-          <a class="post-link" href="/gpu/2017/11/01/Faster-Triplanar-Texturing.html">Faster Triplanar Texturing</a>
-        </h2>
-      </li>
-    
-      <li>
-        
-        <span class="post-meta">Oct 28, 2017</span>
-
-        <h2>
-          <a class="post-link" href="/gpu/2017/10/28/Barycentric.html">Barycentric Coordinates in Pixel Shader</a>
-        </h2>
-      </li>
-    
-      <li>
-        
-        <span class="post-meta">Oct 15, 2017</span>
-
-        <h2>
-          <a class="post-link" href="/avx/2017/10/15/AVX2-Gather.html">AVX2 Gather Performance</a>
-        </h2>
-      </li>
-    
-  </ul>
-
-  <p class="rss-subscribe">subscribe <a href="/feed.xml">via RSS</a></p>
-
-</div>
+</article>
 
       </div>
     </main>

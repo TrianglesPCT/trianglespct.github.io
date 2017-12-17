@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.6.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-12-17T11:24:14-07:00</updated><id>http://localhost:4000/</id><title type="html">Comehither</title><subtitle>Game Dev and Programming</subtitle><entry><title type="html">Higher Quality Vertex Normals</title><link href="http://localhost:4000/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html" rel="alternate" type="text/html" title="Higher Quality Vertex Normals" /><published>2017-11-05T10:20:08-07:00</published><updated>2017-11-05T10:20:08-07:00</updated><id>http://localhost:4000/gpu/2017/11/05/Higher%20Quality%20Vertex%20Normals</id><content type="html" xml:base="http://localhost:4000/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html">&lt;p&gt;I use the &lt;a href=&quot;http://jcgt.org/published/0003/02/01/paper.pdf&quot;&gt;Oct16&lt;/a&gt; format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.&lt;/p&gt;
+
+&lt;p&gt;Most of the time this was sufficient, but under certain conditions artifacts were visible– such as the surface of a smoothly varying sphere using triplanar texturing, whose weights are based on the normals.&lt;/p&gt;
+
+&lt;p&gt;Here is a visualization of the Triplanar weights generated from the Oct16 normals.
+&lt;img src=&quot;http://localhost:4000/assets/oct16_bad.jpg&quot; alt=&quot;Oct16 Global&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;There is a very obvious diamond pattern visible.
+Even switching to Oct20(10 bits per channel) does not completely solve this, the diamonds are much smaller, but they persist.&lt;/p&gt;
+
+&lt;p&gt;Oct16, but with custom scale/bias
+&lt;img src=&quot;http://localhost:4000/assets/oct16_good.jpg&quot; alt=&quot;Oct16 Relative&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Instead of adding bits, I decided to take advantage of the fact that most triangle patches only use a
+limited range of the world space normals.&lt;/p&gt;
+
+&lt;p&gt;I track min/max per channel for the entire patch, then encode the normals so that the full range of bits is used.&lt;/p&gt;
+
+&lt;p&gt;Decoding in the shader requires a custom scale and bias parameter per channel(4 floats for the two channel Oct16).&lt;/p&gt;
+
+&lt;p&gt;There are no extra instructions,  as a fixed scale of 2 and bias of -1 was previously being used to transform from [0,1] to [-1,1] range.&lt;/p&gt;
+
+&lt;p&gt;The 2nd image was encoded this way, the normals are still using Oct16, so only 16 bits per normal, but with a custom scale/bias per patch.&lt;/p&gt;
+
+&lt;p&gt;In the majority of cases this provides many extra bits of precision, and in the worst case it degrades back to standard Oct16.&lt;/p&gt;</content><author><name></name></author><summary type="html">I use the Oct16 format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.</summary></entry><entry><title type="html">Faster Triplanar Texturing</title><link href="http://localhost:4000/gpu/2017/11/01/Faster-Triplanar-Texturing.html" rel="alternate" type="text/html" title="Faster Triplanar Texturing" /><published>2017-11-01T11:20:08-06:00</published><updated>2017-11-01T11:20:08-06:00</updated><id>http://localhost:4000/gpu/2017/11/01/Faster%20Triplanar%20Texturing</id><content type="html" xml:base="http://localhost:4000/gpu/2017/11/01/Faster-Triplanar-Texturing.html">&lt;p&gt;Here is a method I created to improve performance when using Triplanar texturing.
+I also think it looks better.&lt;/p&gt;
+
+&lt;p&gt;So the standard triplanar texturing algorithm you will find in varous places on the internet looks something like this.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c--&quot; data-lang=&quot;c++&quot;&gt;&lt;span class=&quot;n&quot;&gt;float3&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TriPlanarBlendWeightsStandard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;float3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+ &lt;span class=&quot;n&quot;&gt;float3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;abs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;xyz&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;  
+ &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.55&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+ &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;    
+ &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rcpBlend&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1.0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+ &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rcpBlend&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;If we visualize the blend zones this is what it looks like.
+&lt;img src=&quot;http://localhost:4000/assets/triplanar2.jpg&quot; alt=&quot;Blend Zones&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Red/Green/Blue represent one texture sample.&lt;/p&gt;
+
+&lt;p&gt;Yellow/pink/cyan represent two textures samples.&lt;/p&gt;
+
+&lt;p&gt;And in the white corner we need all three.&lt;/p&gt;
+
+&lt;p&gt;As we can see the blend width is not constant, it is very small in the corner and quite wide along axis aligned edges.&lt;/p&gt;
+
+&lt;p&gt;The corner has barely any blending as we have pushed our blend zone out as far as possible by subtracting .55.(anything over 1/sqrt(3) or 0.577 results in negative blend zones in the corner).&lt;/p&gt;
+
+&lt;p&gt;This results in needless texture sampling along aligned edges, stealing away our precious bandwidth.&lt;/p&gt;
+
+&lt;p&gt;Constant Blend Width
+&lt;img src=&quot;http://localhost:4000/assets/triplanar3.jpg&quot; alt=&quot;Constant Blend Width&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;What we want is something more like this– constant blend width.&lt;/p&gt;
+
+&lt;p&gt;We do this by working in max norm distance instead of euclidean,  as our planes are axis aligned anyway–&lt;/p&gt;
+
+&lt;p&gt;Here is the modified code that generates this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c--&quot; data-lang=&quot;c++&quot;&gt;&lt;span class=&quot;n&quot;&gt;float3&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TriPlanarBlendWeightsConstantOverlap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;float3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+
+ &lt;span class=&quot;c1&quot;&gt;//float3 blend_weights =  abs(normal);
+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+ &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;maxBlend&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+ &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;maxBlend&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.9&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+ &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;    
+
+ &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rcpBlend&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1.0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+ &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;blend_weights&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rcpBlend&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You can adjust the blend width by changing the scalar .9 value.&lt;/p&gt;
+
+&lt;p&gt;On my GPU the constant version runs slightly faster, likely because there are less pixels where more than one texture sample is required.&lt;/p&gt;
+
+&lt;p&gt;I believe it also looks better–as there is less smearing along axis aligned edges.&lt;/p&gt;
+
+&lt;p&gt;Here is a &lt;a href=&quot;https://www.shadertoy.com/view/XlBcz3&quot;&gt;shadertoy&lt;/a&gt; I created if you want to play with it&lt;/p&gt;</content><author><name></name></author><summary type="html">Here is a method I created to improve performance when using Triplanar texturing. I also think it looks better.</summary></entry><entry><title type="html">Barycentric Coordinates in Pixel Shader</title><link href="http://localhost:4000/gpu/2017/10/28/Barycentric.html" rel="alternate" type="text/html" title="Barycentric Coordinates in Pixel Shader" /><published>2017-10-28T11:20:08-06:00</published><updated>2017-10-28T11:20:08-06:00</updated><id>http://localhost:4000/gpu/2017/10/28/Barycentric</id><content type="html" xml:base="http://localhost:4000/gpu/2017/10/28/Barycentric.html">&lt;p&gt;Recently I was in need a way to perform smooth blending between per vertex materials.&lt;/p&gt;
+
+&lt;p&gt;Basically I needed &lt;a href=&quot;https://en.wikipedia.org/wiki/Barycentric_coordinate_system&quot;&gt;barycentric coordinates&lt;/a&gt; + access to each vertices material in the pixel shader.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately this isn’t built into the common rendering APIs, and so requires some extra effort.&lt;/p&gt;
+
+&lt;p&gt;Here is a list of some possible solutions:&lt;/p&gt;
+
+&lt;p&gt;Geometry Shader method:  Assign the coordinates: (1,0,0), (0,1,0), (0,0,1) to the vertices of the triangle.  Also write the three materials to each vertex.
+This method is easy to implement but has terrible performance on many cards, since it requires a geometry shader.  When enabled on my AMD card, FPS drops to half or less.&lt;/p&gt;
+
+&lt;p&gt;AMD AGS Driver extension:  AMD has a library called &lt;a href=&quot;https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK&quot;&gt;AGS_SDK&lt;/a&gt; which exposes driver extensions, one of these is direct access to barycentric coordinates in the pixel shader.  It also allows for direct access to any of the attributes from the 3 vertices that make up the triangle.
+This method is very fast and works well if you have an AMD card that supports it.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c--&quot; data-lang=&quot;c++&quot;&gt; &lt;span class=&quot;n&quot;&gt;float2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bary2d&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsics_IjBarycentricCoords&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsicsBarycentric_PerspCenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+ &lt;span class=&quot;c1&quot;&gt;//reconstruct the 3rd coordinate
+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float3&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bary&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;float3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bary2d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bary2d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bary2d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bary2d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;//extract materials
+&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsics_VertexParameterComponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+ &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsics_VertexParameterComponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+ &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsics_VertexParameterComponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Nvidia FastGeometryShader: Nvidia also have driver extensions &lt;a href=&quot;https://developer.nvidia.com/nvapi&quot;&gt;NVAPI&lt;/a&gt;, and one of these is the the “fast geometry shader” for when you only need a subset of the features geometry shaders offer.
+ It should be possible to use this to pass down barycentric coordinates &amp;amp; materials , but I do not have an Nvidia card to test this on.&lt;/p&gt;
+
+&lt;p&gt;Domain Shader?: I haven’t tried this method, but I think it might be possible to pass down barycentric coordinates from a domain shader?&lt;/p&gt;
+
+&lt;p&gt;Embed Into Vertex Data: Another option is to enlarge the vertex, and embed the barycentric coordinates and the 3 materials directly into it.
+ This is probably a better fallback than the GS, although it does have the downside of reducing vertex reuse, since many vertices that were previously identical would now differ.&lt;/p&gt;</content><author><name></name></author><summary type="html">Recently I was in need a way to perform smooth blending between per vertex materials.</summary></entry><entry><title type="html">AVX2 Gather Performance</title><link href="http://localhost:4000/avx/2017/10/15/AVX2-Gather.html" rel="alternate" type="text/html" title="AVX2 Gather Performance" /><published>2017-10-15T11:20:08-06:00</published><updated>2017-10-15T11:20:08-06:00</updated><id>http://localhost:4000/avx/2017/10/15/AVX2%20Gather</id><content type="html" xml:base="http://localhost:4000/avx/2017/10/15/AVX2-Gather.html">&lt;p&gt;Masked Gather vs Unmasked Gather&lt;/p&gt;
+
+&lt;p&gt;AVX2 has masked gather instructions(_mm_mask_i32gather_epi32 etc), these have two additional parameters, a mask, and a default value that is used when the mask is false.&lt;/p&gt;
+
+&lt;p&gt;I was hoping masked gathers would be accelerated, such that when most of the lanes were masked off, the gather would complete sooner, but this does not appear to be the case.&lt;/p&gt;
+
+&lt;p&gt;The performance of masked and unmasked gathers was very similar, but masked gathers were consistently slower than unmasked gathers.&lt;/p&gt;
+
+&lt;p&gt;Load vs Gather vs Software Gather&lt;/p&gt;
+
+&lt;p&gt;To compare gather with load, I created a buffer and run through it in linear order summing the values.
+ I forced the gathers to load from the same indices the load was operating on.  Indices(0,1,2,3,4,5,6,7), incremented by 8 for each loop.&lt;/p&gt;
+
+&lt;p&gt;Software gather loaded each index using scalar loads instead of the hardware intrinsics.
+Gather was generally ~1.2-1.5x faster than software gather.&lt;/p&gt;
+
+&lt;p&gt;Performance was depended upon the cache level that buffer fit into.&lt;/p&gt;
+
+&lt;p&gt;Buffer fits in L1&lt;/p&gt;
+
+&lt;p&gt;Load is ~10x faster than Gather&lt;/p&gt;
+
+&lt;p&gt;Buffer fits in L2&lt;/p&gt;
+
+&lt;p&gt;Load is ~3.5x faster than Gather&lt;/p&gt;
+
+&lt;p&gt;Buffer greater than L2&lt;/p&gt;
+
+&lt;p&gt;Load tapers off to ~2.x faster than Gather&lt;/p&gt;
+
+&lt;p&gt;This was all run on a Haswell, newer chips might perform differently.&lt;/p&gt;</content><author><name></name></author><summary type="html">Masked Gather vs Unmasked Gather</summary></entry></feed>
