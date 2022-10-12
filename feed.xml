@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.6.2">Jekyll</generator><link href="https://niadb.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://niadb.github.io/" rel="alternate" type="text/html" /><updated>2018-01-24T08:21:17-07:00</updated><id>https://niadb.github.io/</id><title type="html">Comehither</title><subtitle>Game Dev, Programming, SIMD, GPU, Voxels</subtitle><entry><title type="html">Quasi Virtual Texturing System</title><link href="https://niadb.github.io/gpu/2017/12/04/Quasi-Virtual-Texturing-System.html" rel="alternate" type="text/html" title="Quasi Virtual Texturing System" /><published>2017-12-04T10:20:08-07:00</published><updated>2017-12-04T10:20:08-07:00</updated><id>https://niadb.github.io/gpu/2017/12/04/Quasi%20Virtual%20Texturing%20System</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/12/04/Quasi-Virtual-Texturing-System.html">&lt;p&gt;This is an overview of a quasi virtual texturing system that I implemented for my game.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.6.2">Jekyll</generator><link href="https://trianglespct.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://trianglespct.github.io/" rel="alternate" type="text/html" /><updated>2018-01-24T08:21:17-07:00</updated><id>https://trianglespct.github.io/</id><title type="html">Comehither</title><subtitle>Game Dev, Programming, SIMD, GPU, Voxels</subtitle><entry><title type="html">Quasi Virtual Texturing System</title><link href="https://trianglespct.github.io/gpu/2017/12/04/Quasi-Virtual-Texturing-System.html" rel="alternate" type="text/html" title="Quasi Virtual Texturing System" /><published>2017-12-04T10:20:08-07:00</published><updated>2017-12-04T10:20:08-07:00</updated><id>https://trianglespct.github.io/gpu/2017/12/04/Quasi%20Virtual%20Texturing%20System</id><content type="html" xml:base="https://trianglespct.github.io/gpu/2017/12/04/Quasi-Virtual-Texturing-System.html">&lt;p&gt;This is an overview of a quasi virtual texturing system that I implemented for my game.&lt;/p&gt;
 
 &lt;p&gt;I use this system instead of a traditional virtual texturing system for the following reasons.&lt;/p&gt;
 
@@ -31,7 +31,7 @@
 
 &lt;p&gt;Here is a visualization of the layers.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/virtual_texture_layers.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;
+&lt;p&gt;&lt;img src=&quot;https://trianglespct.github.io/assets/virtual_texture_layers.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;
   &lt;em&gt;Yellow is 256, Green is 512, Blue is 1024, and Red is 2048.&lt;br /&gt;
   I force everything to use 256 past a certain distance to reduce divergence&lt;/em&gt;&lt;/p&gt;
 
@@ -70,11 +70,11 @@
 
 &lt;ul&gt;
   &lt;li&gt;D3d11 has a max texture array size of 2048. This means this system can only support 2048 separate materials. I am nowhere near this limit, so this isn’t an issue for me.&lt;/li&gt;
-&lt;/ul&gt;</content><author><name></name></author><summary type="html">This is an overview of a quasi virtual texturing system that I implemented for my game. I use this system instead of a traditional virtual texturing system for the following reasons.</summary></entry><entry><title type="html">Choosing a PBR Texture Format</title><link href="https://niadb.github.io/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html" rel="alternate" type="text/html" title="Choosing a PBR Texture Format" /><published>2017-11-27T10:20:08-07:00</published><updated>2017-11-27T10:20:08-07:00</updated><id>https://niadb.github.io/gpu/2017/11/27/GPU%20Texture%20Format%20for%20PBR</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html">&lt;p&gt;&lt;strong&gt;Objective&lt;/strong&gt;: &lt;em&gt;encode a full &lt;a href=&quot;https://www.allegorithmic.com/pbr-guide&quot;&gt;PBR&lt;/a&gt; (physically-based rendering) set of channels into as few bits as possible, with good performance&lt;/em&gt;.&lt;/p&gt;
+&lt;/ul&gt;</content><author><name></name></author><summary type="html">This is an overview of a quasi virtual texturing system that I implemented for my game. I use this system instead of a traditional virtual texturing system for the following reasons.</summary></entry><entry><title type="html">Choosing a PBR Texture Format</title><link href="https://trianglespct.github.io/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html" rel="alternate" type="text/html" title="Choosing a PBR Texture Format" /><published>2017-11-27T10:20:08-07:00</published><updated>2017-11-27T10:20:08-07:00</updated><id>https://trianglespct.github.io/gpu/2017/11/27/GPU%20Texture%20Format%20for%20PBR</id><content type="html" xml:base="https://trianglespct.github.io/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html">&lt;p&gt;&lt;strong&gt;Objective&lt;/strong&gt;: &lt;em&gt;encode a full &lt;a href=&quot;https://www.allegorithmic.com/pbr-guide&quot;&gt;PBR&lt;/a&gt; (physically-based rendering) set of channels into as few bits as possible, with good performance&lt;/em&gt;.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/greenshadow.jpg&quot; alt=&quot;Using PBR textures&quot; /&gt;
+&lt;p&gt;&lt;img src=&quot;https://trianglespct.github.io/assets/greenshadow.jpg&quot; alt=&quot;Using PBR textures&quot; /&gt;
 &lt;strong&gt;Game after PBR textures were added&lt;/strong&gt;
-&lt;img src=&quot;https://niadb.github.io/assets/metals.jpg&quot; alt=&quot;Metals&quot; /&gt;
+&lt;img src=&quot;https://trianglespct.github.io/assets/metals.jpg&quot; alt=&quot;Metals&quot; /&gt;
 &lt;strong&gt;Metals are visible here&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;Performance tests on my AMD GPU show that each additional texture adds significant cost, using 3 textures to encode the PBR signal with a size of 2 bytes per texel is much more costly than 2 textures at the same overall number of bytes per texel.&lt;/p&gt;
@@ -169,7 +169,7 @@ When bit compressed, in this case with zstd, the BC7 files are generally about 1
   &lt;li&gt;
     &lt;p&gt;The metal channel is often not used, so for many textures it is possible to reuse this channel to store something else, such as anisotropic roughness or subsurface information.&lt;/p&gt;
   &lt;/li&gt;
-&lt;/ol&gt;</content><author><name></name></author><summary type="html">Objective: encode a full PBR (physically-based rendering) set of channels into as few bits as possible, with good performance.</summary></entry><entry><title type="html">Adding SDF Collision to Bullet Physics</title><link href="https://niadb.github.io/c++/2017/11/15/Adding-SDF-support-to-Bullet-Physics.html" rel="alternate" type="text/html" title="Adding SDF Collision to Bullet Physics" /><published>2017-11-15T10:20:08-07:00</published><updated>2017-11-15T10:20:08-07:00</updated><id>https://niadb.github.io/c++/2017/11/15/Adding%20SDF%20support%20to%20Bullet%20Physics</id><content type="html" xml:base="https://niadb.github.io/c++/2017/11/15/Adding-SDF-support-to-Bullet-Physics.html">&lt;p&gt;&lt;a href=&quot;http://bulletphysics.org/wordpress/&quot;&gt;Bullet Physics&lt;/a&gt; is an open source physics engine that is sometimes used for games and movies.&lt;/p&gt;
+&lt;/ol&gt;</content><author><name></name></author><summary type="html">Objective: encode a full PBR (physically-based rendering) set of channels into as few bits as possible, with good performance.</summary></entry><entry><title type="html">Adding SDF Collision to Bullet Physics</title><link href="https://trianglespct.github.io/c++/2017/11/15/Adding-SDF-support-to-Bullet-Physics.html" rel="alternate" type="text/html" title="Adding SDF Collision to Bullet Physics" /><published>2017-11-15T10:20:08-07:00</published><updated>2017-11-15T10:20:08-07:00</updated><id>https://trianglespct.github.io/c++/2017/11/15/Adding%20SDF%20support%20to%20Bullet%20Physics</id><content type="html" xml:base="https://trianglespct.github.io/c++/2017/11/15/Adding-SDF-support-to-Bullet-Physics.html">&lt;p&gt;&lt;a href=&quot;http://bulletphysics.org/wordpress/&quot;&gt;Bullet Physics&lt;/a&gt; is an open source physics engine that is sometimes used for games and movies.&lt;/p&gt;
 
 &lt;p&gt;It supports many near phase collision types such as spheres, boxes, capsules, triangle meshes and convex hulls.&lt;/p&gt;
 
@@ -210,10 +210,10 @@ When bit compressed, in this case with zstd, the BC7 files are generally about 1
 
 &lt;p&gt;It also has fewer issues with penetration than triangle meshes since SDFs have proper volume, even if a small object penetrates into  a larger one, it will still be pushed out in the correct direction.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/shapeforpointhull.jpg&quot; alt=&quot;SDFShape1&quot; /&gt;
+&lt;p&gt;&lt;img src=&quot;https://trianglespct.github.io/assets/shapeforpointhull.jpg&quot; alt=&quot;SDFShape1&quot; /&gt;
   Here is a shape for which we will generate a point hull&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/pointhull.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://trianglespct.github.io/assets/pointhull.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;And here is a visualization of the point hull.&lt;/p&gt;
 
@@ -275,17 +275,17 @@ When bit compressed, in this case with zstd, the BC7 files are generally about 1
   &lt;li&gt;The algorithm for placing points within the hull could always use more work.&lt;/li&gt;
   &lt;li&gt;It might also be worth looking into storing a per point radius, this will allow for less points in some situations&lt;/li&gt;
   &lt;li&gt;Angular Velocity for CCD&lt;/li&gt;
-&lt;/ol&gt;</content><author><name></name></author><summary type="html">Bullet Physics is an open source physics engine that is sometimes used for games and movies.</summary></entry><entry><title type="html">Relative Vertex Normals</title><link href="https://niadb.github.io/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html" rel="alternate" type="text/html" title="Relative Vertex Normals" /><published>2017-11-05T10:20:08-07:00</published><updated>2017-11-05T10:20:08-07:00</updated><id>https://niadb.github.io/gpu/2017/11/05/Higher%20Quality%20Vertex%20Normals</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html">&lt;p&gt;I use the &lt;a href=&quot;http://jcgt.org/published/0003/02/01/paper.pdf&quot;&gt;Oct16&lt;/a&gt; format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.&lt;/p&gt;
+&lt;/ol&gt;</content><author><name></name></author><summary type="html">Bullet Physics is an open source physics engine that is sometimes used for games and movies.</summary></entry><entry><title type="html">Relative Vertex Normals</title><link href="https://trianglespct.github.io/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html" rel="alternate" type="text/html" title="Relative Vertex Normals" /><published>2017-11-05T10:20:08-07:00</published><updated>2017-11-05T10:20:08-07:00</updated><id>https://trianglespct.github.io/gpu/2017/11/05/Higher%20Quality%20Vertex%20Normals</id><content type="html" xml:base="https://trianglespct.github.io/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html">&lt;p&gt;I use the &lt;a href=&quot;http://jcgt.org/published/0003/02/01/paper.pdf&quot;&gt;Oct16&lt;/a&gt; format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.&lt;/p&gt;
 
 &lt;p&gt;Most of the time this was sufficient, but under certain conditions artifacts were visible– such as the surface of a smoothly varying sphere using triplanar texturing, whose weights are based on the normals.&lt;/p&gt;
 
 &lt;p&gt;Here is a visualization of the Triplanar weights generated from the Oct16 normals.
-&lt;img src=&quot;https://niadb.github.io/assets/oct16_bad.jpg&quot; alt=&quot;Oct16 Global&quot; /&gt;
+&lt;img src=&quot;https://trianglespct.github.io/assets/oct16_bad.jpg&quot; alt=&quot;Oct16 Global&quot; /&gt;
 There is a very obvious diamond pattern visible.
 Even switching to Oct20(10 bits per channel) does not completely solve this, the diamonds are much smaller, but they persist.&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;Solution:&lt;/strong&gt; Use custom scale/bias to transform into relative coordinates
-&lt;img src=&quot;https://niadb.github.io/assets/oct16_good.jpg&quot; alt=&quot;Oct16 Relative&quot; /&gt;&lt;/p&gt;
+&lt;img src=&quot;https://trianglespct.github.io/assets/oct16_good.jpg&quot; alt=&quot;Oct16 Relative&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Instead of adding bits, I decided to take advantage of the fact that most triangle patches only use a
 limited range of the world space normals.&lt;/p&gt;
@@ -299,7 +299,7 @@ limited range of the world space normals.&lt;/p&gt;
 &lt;p&gt;The 2nd image was encoded this way, the normals are still using Oct16, so only 16 bits per normal, but with a custom scale/bias per patch.&lt;/p&gt;
 
 &lt;p&gt;In many important cases, such as on this sphere, this provides many extra bits of precision.&lt;br /&gt;
- In the worst case it degrades back to standard Oct16.&lt;/p&gt;</content><author><name></name></author><summary type="html">I use the Oct16 format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.</summary></entry><entry><title type="html">Faster Triplanar Texturing</title><link href="https://niadb.github.io/gpu/2017/11/01/Faster-Triplanar-Texturing.html" rel="alternate" type="text/html" title="Faster Triplanar Texturing" /><published>2017-11-01T11:20:08-06:00</published><updated>2017-11-01T11:20:08-06:00</updated><id>https://niadb.github.io/gpu/2017/11/01/Faster%20Triplanar%20Texturing</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/11/01/Faster-Triplanar-Texturing.html">&lt;p&gt;Here is a method I created to improve performance when using Triplanar texturing.
+ In the worst case it degrades back to standard Oct16.&lt;/p&gt;</content><author><name></name></author><summary type="html">I use the Oct16 format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.</summary></entry><entry><title type="html">Faster Triplanar Texturing</title><link href="https://trianglespct.github.io/gpu/2017/11/01/Faster-Triplanar-Texturing.html" rel="alternate" type="text/html" title="Faster Triplanar Texturing" /><published>2017-11-01T11:20:08-06:00</published><updated>2017-11-01T11:20:08-06:00</updated><id>https://trianglespct.github.io/gpu/2017/11/01/Faster%20Triplanar%20Texturing</id><content type="html" xml:base="https://trianglespct.github.io/gpu/2017/11/01/Faster-Triplanar-Texturing.html">&lt;p&gt;Here is a method I created to improve performance when using Triplanar texturing.
 I also think it looks better.&lt;/p&gt;
 
 &lt;p&gt;So the standard triplanar texturing algorithm you will find in varous places on the internet looks something like this.&lt;/p&gt;
@@ -313,7 +313,7 @@ I also think it looks better.&lt;/p&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;If we visualize the blend zones this is what it looks like.
-&lt;img src=&quot;https://niadb.github.io/assets/triplanar2.jpg&quot; alt=&quot;Blend Zones&quot; /&gt;&lt;/p&gt;
+&lt;img src=&quot;https://trianglespct.github.io/assets/triplanar2.jpg&quot; alt=&quot;Blend Zones&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Red/Green/Blue represent one texture sample.&lt;/p&gt;
 
@@ -328,7 +328,7 @@ I also think it looks better.&lt;/p&gt;
 &lt;p&gt;This results in needless texture sampling along aligned edges, stealing away our precious bandwidth.&lt;/p&gt;
 
 &lt;p&gt;Constant Blend Width
-&lt;img src=&quot;https://niadb.github.io/assets/triplanar3.jpg&quot; alt=&quot;Constant Blend Width&quot; /&gt;&lt;/p&gt;
+&lt;img src=&quot;https://trianglespct.github.io/assets/triplanar3.jpg&quot; alt=&quot;Constant Blend Width&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;What we want is something more like this– constant blend width.&lt;/p&gt;
 
@@ -364,7 +364,7 @@ I also think it looks better.&lt;/p&gt;
   
     &lt;a class=&quot;next&quot; href=&quot;/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html&quot;&gt;Relative Vertex Normals &amp;raquo;&lt;/a&gt;
   
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Here is a method I created to improve performance when using Triplanar texturing. I also think it looks better.</summary></entry><entry><title type="html">Barycentric Coordinates in Pixel Shader</title><link href="https://niadb.github.io/gpu/2017/10/28/Barycentric.html" rel="alternate" type="text/html" title="Barycentric Coordinates in Pixel Shader" /><published>2017-10-28T11:20:08-06:00</published><updated>2017-10-28T11:20:08-06:00</updated><id>https://niadb.github.io/gpu/2017/10/28/Barycentric</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/10/28/Barycentric.html">&lt;p&gt;Recently I was in need a way to perform smooth blending between per vertex materials.&lt;/p&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Here is a method I created to improve performance when using Triplanar texturing. I also think it looks better.</summary></entry><entry><title type="html">Barycentric Coordinates in Pixel Shader</title><link href="https://trianglespct.github.io/gpu/2017/10/28/Barycentric.html" rel="alternate" type="text/html" title="Barycentric Coordinates in Pixel Shader" /><published>2017-10-28T11:20:08-06:00</published><updated>2017-10-28T11:20:08-06:00</updated><id>https://trianglespct.github.io/gpu/2017/10/28/Barycentric</id><content type="html" xml:base="https://trianglespct.github.io/gpu/2017/10/28/Barycentric.html">&lt;p&gt;Recently I was in need a way to perform smooth blending between per vertex materials.&lt;/p&gt;
 
 &lt;p&gt;Basically I needed &lt;a href=&quot;https://en.wikipedia.org/wiki/Barycentric_coordinate_system&quot;&gt;barycentric coordinates&lt;/a&gt; + access to each vertices material in the pixel shader.&lt;/p&gt;
 
@@ -399,11 +399,11 @@ This method is very fast and works well if you have an AMD card that supports it
 
 &lt;p&gt;&lt;strong&gt;Visual Comparison&lt;/strong&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/barycentrics_on.jpg&quot; alt=&quot;BaryOn&quot; /&gt;
+&lt;p&gt;&lt;img src=&quot;https://trianglespct.github.io/assets/barycentrics_on.jpg&quot; alt=&quot;BaryOn&quot; /&gt;
  &lt;em&gt;Ground rendered using barycentrics to perform smooth blending between materials&lt;/em&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/barycentrics_off.jpg&quot; alt=&quot;BaryOff&quot; /&gt;
- &lt;em&gt;Ground rendered without barycentrics, the material is selected from the base vertex and there is no blending between materials&lt;/em&gt;&lt;/p&gt;</content><author><name></name></author><summary type="html">Recently I was in need a way to perform smooth blending between per vertex materials.</summary></entry><entry><title type="html">AVX2 Gather Performance</title><link href="https://niadb.github.io/avx/2017/10/15/AVX2-Gather.html" rel="alternate" type="text/html" title="AVX2 Gather Performance" /><published>2017-10-15T11:20:08-06:00</published><updated>2017-10-15T11:20:08-06:00</updated><id>https://niadb.github.io/avx/2017/10/15/AVX2%20Gather</id><content type="html" xml:base="https://niadb.github.io/avx/2017/10/15/AVX2-Gather.html">&lt;p&gt;&lt;strong&gt;Masked Gather vs Unmasked Gather&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://trianglespct.github.io/assets/barycentrics_off.jpg&quot; alt=&quot;BaryOff&quot; /&gt;
+ &lt;em&gt;Ground rendered without barycentrics, the material is selected from the base vertex and there is no blending between materials&lt;/em&gt;&lt;/p&gt;</content><author><name></name></author><summary type="html">Recently I was in need a way to perform smooth blending between per vertex materials.</summary></entry><entry><title type="html">AVX2 Gather Performance</title><link href="https://trianglespct.github.io/avx/2017/10/15/AVX2-Gather.html" rel="alternate" type="text/html" title="AVX2 Gather Performance" /><published>2017-10-15T11:20:08-06:00</published><updated>2017-10-15T11:20:08-06:00</updated><id>https://trianglespct.github.io/avx/2017/10/15/AVX2%20Gather</id><content type="html" xml:base="https://trianglespct.github.io/avx/2017/10/15/AVX2-Gather.html">&lt;p&gt;&lt;strong&gt;Masked Gather vs Unmasked Gather&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;AVX2 has masked gather instructions(&lt;a href=&quot;https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_mask_i32gather_epi32&amp;amp;expand=2810,2810&quot;&gt;_mm_mask_i32gather_epi32&lt;/a&gt; etc), these have two additional parameters, a mask, and a default value that is used when the mask is false.&lt;/p&gt;
 
@@ -442,7 +442,7 @@ Gather was generally ~1.2-1.5x faster than software gather.&lt;/p&gt;
   
     &lt;a class=&quot;next&quot; href=&quot;/gpu/2017/10/28/Barycentric.html&quot;&gt;Barycentric Coordinates in Pixel Shader &amp;raquo;&lt;/a&gt;
   
-&lt;/div&gt;</content><author><name></name></author><summary type="html">Masked Gather vs Unmasked Gather</summary></entry><entry><title type="html">Moment of Inertia for a Distance Field</title><link href="https://niadb.github.io/physics/2017/09/17/Moment-Of-Inertia.html" rel="alternate" type="text/html" title="Moment of Inertia for a Distance Field" /><published>2017-09-17T11:20:08-06:00</published><updated>2017-09-17T11:20:08-06:00</updated><id>https://niadb.github.io/physics/2017/09/17/Moment%20Of%20Inertia</id><content type="html" xml:base="https://niadb.github.io/physics/2017/09/17/Moment-Of-Inertia.html">&lt;p&gt;While adding physics support to my voxel engine I needed a reasonable accurate &amp;amp; fast method to calculate the moment of inertia, volume, and center of mass for an arbitrary distance field.&lt;/p&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Masked Gather vs Unmasked Gather</summary></entry><entry><title type="html">Moment of Inertia for a Distance Field</title><link href="https://trianglespct.github.io/physics/2017/09/17/Moment-Of-Inertia.html" rel="alternate" type="text/html" title="Moment of Inertia for a Distance Field" /><published>2017-09-17T11:20:08-06:00</published><updated>2017-09-17T11:20:08-06:00</updated><id>https://trianglespct.github.io/physics/2017/09/17/Moment%20Of%20Inertia</id><content type="html" xml:base="https://trianglespct.github.io/physics/2017/09/17/Moment-Of-Inertia.html">&lt;p&gt;While adding physics support to my voxel engine I needed a reasonable accurate &amp;amp; fast method to calculate the moment of inertia, volume, and center of mass for an arbitrary distance field.&lt;/p&gt;
 
 &lt;p&gt;I’ve written this C++ code to do so.
 Feed it a regularly spaced grid of points and distances.
@@ -555,7 +555,7 @@ If more accuracy is needed, the sample rate can be increased.&lt;/p&gt;
   
     &lt;a class=&quot;next&quot; href=&quot;/avx/2017/10/15/AVX2-Gather.html&quot;&gt;AVX2 Gather Performance &amp;raquo;&lt;/a&gt;
   
-&lt;/div&gt;</content><author><name></name></author><summary type="html">While adding physics support to my voxel engine I needed a reasonable accurate &amp;amp; fast method to calculate the moment of inertia, volume, and center of mass for an arbitrary distance field.</summary></entry><entry><title type="html">SDF Based Occlusion Culling</title><link href="https://niadb.github.io/c++/2017/06/13/SDF-Based-Occlusion-Culling.html" rel="alternate" type="text/html" title="SDF Based Occlusion Culling" /><published>2017-06-13T11:20:08-06:00</published><updated>2017-06-13T11:20:08-06:00</updated><id>https://niadb.github.io/c++/2017/06/13/SDF%20Based%20Occlusion%20Culling</id><content type="html" xml:base="https://niadb.github.io/c++/2017/06/13/SDF-Based-Occlusion-Culling.html">&lt;p&gt;I’m going to describe an occlusion culling algorithm I came up with about 4 or 5 years ago. I use it in my game and it has worked well for me.&lt;/p&gt;
+&lt;/div&gt;</content><author><name></name></author><summary type="html">While adding physics support to my voxel engine I needed a reasonable accurate &amp;amp; fast method to calculate the moment of inertia, volume, and center of mass for an arbitrary distance field.</summary></entry><entry><title type="html">SDF Based Occlusion Culling</title><link href="https://trianglespct.github.io/c++/2017/06/13/SDF-Based-Occlusion-Culling.html" rel="alternate" type="text/html" title="SDF Based Occlusion Culling" /><published>2017-06-13T11:20:08-06:00</published><updated>2017-06-13T11:20:08-06:00</updated><id>https://trianglespct.github.io/c++/2017/06/13/SDF%20Based%20Occlusion%20Culling</id><content type="html" xml:base="https://trianglespct.github.io/c++/2017/06/13/SDF-Based-Occlusion-Culling.html">&lt;p&gt;I’m going to describe an occlusion culling algorithm I came up with about 4 or 5 years ago. I use it in my game and it has worked well for me.&lt;/p&gt;
 
 &lt;p&gt;If you do not know what occlusion culling is, it is culling objects that are in the frustum, but are blocked from the users view, and do not contribute to the scene.&lt;/p&gt;
 
@@ -572,7 +572,7 @@ If more accuracy is needed, the sample rate can be increased.&lt;/p&gt;
 
 &lt;p&gt;My scene is represented with triangular patches, each containing perhaps 500 to 2000 triangles. They are approximately equal size in screen space.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/patches_show.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;
+&lt;p&gt;&lt;img src=&quot;https://trianglespct.github.io/assets/patches_show.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;
   &lt;em&gt;I’ve scaled the patches down here so that we can see gaps between them&lt;/em&gt;&lt;/p&gt;
 
 &lt;p&gt;Basically we want to shoot rays from the viewers eye to each patch.&lt;/p&gt;
@@ -625,7 +625,7 @@ If more accuracy is needed, the sample rate can be increased.&lt;/p&gt;
   &lt;li&gt;While this algorithm works well for me, this is largely due to the precise way that may engine works, it is probably not well suited to a more typical game engine like Unreal which does not work based on equally sized in screen space triangular patches.&lt;/li&gt;
   &lt;li&gt;Thin objects don’t occlude as well as a software rasterizer based implementation, this is because it relies on the object having volume&lt;/li&gt;
   &lt;li&gt;Occluder fusion isn’t the best&lt;/li&gt;
-&lt;/ul&gt;</content><author><name></name></author><summary type="html">I’m going to describe an occlusion culling algorithm I came up with about 4 or 5 years ago. I use it in my game and it has worked well for me. If you do not know what occlusion culling is, it is culling objects that are in the frustum, but are blocked from the users view, and do not contribute to the scene.</summary></entry><entry><title type="html">Cluster Culling</title><link href="https://niadb.github.io/c++/2016/10/27/Cluster-Culling.html" rel="alternate" type="text/html" title="Cluster Culling" /><published>2016-10-27T11:20:08-06:00</published><updated>2016-10-27T11:20:08-06:00</updated><id>https://niadb.github.io/c++/2016/10/27/Cluster%20Culling</id><content type="html" xml:base="https://niadb.github.io/c++/2016/10/27/Cluster-Culling.html">&lt;p&gt;AMD’s GPUOpen has an article on &lt;a href=&quot;http://gpuopen.com/geometryfx-1-2-cluster-culling/&quot;&gt;Cluster Culling&lt;/a&gt;
+&lt;/ul&gt;</content><author><name></name></author><summary type="html">I’m going to describe an occlusion culling algorithm I came up with about 4 or 5 years ago. I use it in my game and it has worked well for me. If you do not know what occlusion culling is, it is culling objects that are in the frustum, but are blocked from the users view, and do not contribute to the scene.</summary></entry><entry><title type="html">Cluster Culling</title><link href="https://trianglespct.github.io/c++/2016/10/27/Cluster-Culling.html" rel="alternate" type="text/html" title="Cluster Culling" /><published>2016-10-27T11:20:08-06:00</published><updated>2016-10-27T11:20:08-06:00</updated><id>https://trianglespct.github.io/c++/2016/10/27/Cluster%20Culling</id><content type="html" xml:base="https://trianglespct.github.io/c++/2016/10/27/Cluster-Culling.html">&lt;p&gt;AMD’s GPUOpen has an article on &lt;a href=&quot;http://gpuopen.com/geometryfx-1-2-cluster-culling/&quot;&gt;Cluster Culling&lt;/a&gt;
 &lt;img src=&quot;https://3.bp.blogspot.com/-ry8JKYdsmtQ/WG5fpoDbObI/AAAAAAAAGqk/zxwv8Y16KasQUo9UECAn3g5RdPG02N5ZwCLcB/s1600/geometry-fx.png&quot; alt=&quot;Oct16 Global&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Basically for a given mesh cluster, you can often perform a variant of backface culling on the entire cluster.&lt;/p&gt;
