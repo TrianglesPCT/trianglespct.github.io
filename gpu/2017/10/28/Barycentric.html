@@ -10,7 +10,7 @@
   <meta name="description" content="Recently I was in need a way to perform smooth blending between per vertex materials.">
 
   <link rel="stylesheet" href="/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/gpu/2017/10/28/Barycentric.html">
+  <link rel="canonical" href="https://niadb.github.io/gpu/2017/10/28/Barycentric.html">
   <link rel="alternate" type="application/rss+xml" title="Comehither" href="/feed.xml">
   
   
@@ -46,7 +46,7 @@
           
             
             
-            <a class="page-link" href="/pages/Normals.html">A page</a>
+            <a class="page-link" href="/pages/VoxelEngine.html">Voxel Engine</a>
             
           
             
@@ -88,10 +88,12 @@
 
 <p>Here is a list of some possible solutions:</p>
 
-<p>Geometry Shader method:  Assign the coordinates: (1,0,0), (0,1,0), (0,0,1) to the vertices of the triangle.  Also write the three materials to each vertex.
+<p><strong>Geometry Shader</strong>:  Assign the coordinates: (1,0,0), (0,1,0), (0,0,1) to the vertices of the triangle.  Also write the three materials to each vertex.
 This method is easy to implement but has terrible performance on many cards, since it requires a geometry shader.  When enabled on my AMD card, FPS drops to half or less.</p>
 
-<p>AMD AGS Driver extension:  AMD has a library called <a href="https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK">AGS_SDK</a> which exposes driver extensions, one of these is direct access to barycentric coordinates in the pixel shader.  It also allows for direct access to any of the attributes from the 3 vertices that make up the triangle.
+<p><em>The following two methods are D3D11/12 focused</em></p>
+
+<p><strong>AMD AGS Driver extension</strong>:  AMD has a library called <a href="https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK">AGS_SDK</a> which exposes driver extensions, one of these is direct access to barycentric coordinates in the pixel shader.  It also allows for direct access to any of the attributes from the 3 vertices that make up the triangle.
 This method is very fast and works well if you have an AMD card that supports it.</p>
 
 <figure class="highlight"><pre><code class="language-c--" data-lang="c++"> <span class="n">float2</span> <span class="n">bary2d</span> <span class="o">=</span> <span class="n">AmdDxExtShaderIntrinsics_IjBarycentricCoords</span><span class="p">(</span><span class="n">AmdDxExtShaderIntrinsicsBarycentric_PerspCenter</span><span class="p">);</span>
@@ -103,13 +105,21 @@ This method is very fast and works well if you have an AMD card that supports it
  <span class="kt">float</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">AmdDxExtShaderIntrinsics_VertexParameterComponent</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
  <span class="kt">float</span> <span class="n">m2</span> <span class="o">=</span> <span class="n">AmdDxExtShaderIntrinsics_VertexParameterComponent</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span></code></pre></figure>
 
-<p>Nvidia FastGeometryShader: Nvidia also have driver extensions <a href="https://developer.nvidia.com/nvapi">NVAPI</a>, and one of these is the the “fast geometry shader” for when you only need a subset of the features geometry shaders offer.
- It should be possible to use this to pass down barycentric coordinates &amp; materials , but I do not have an Nvidia card to test this on.</p>
+<p><strong>Nvidia FastGeometryShader</strong>: Nvidia also have driver extensions <a href="https://developer.nvidia.com/nvapi">NVAPI</a>, and one of these is the the “fast geometry shader” for when you only need a subset of the features geometry shaders offer.
+ It should be possible to use this to pass down barycentric coordinates &amp; materials, but I do not have an Nvidia card to test this on.</p>
 
-<p>Domain Shader?: I haven’t tried this method, but I think it might be possible to pass down barycentric coordinates from a domain shader?</p>
-
-<p>Embed Into Vertex Data: Another option is to enlarge the vertex, and embed the barycentric coordinates and the 3 materials directly into it.
+<p><strong>Embed Into Vertex Data</strong>: Another option is to enlarge the vertex, and embed the barycentric coordinates and the 3 materials directly into it.
  This is probably a better fallback than the GS, although it does have the downside of reducing vertex reuse, since many vertices that were previously identical would now differ.</p>
+
+<p><em>Domain Shader?</em>: I haven’t tried this method, but I think it might be possible to pass down barycentric coordinates from a domain shader</p>
+
+<p><strong>Visual Comparison</strong></p>
+
+<p><img src="https://niadb.github.io/assets/barycentrics_on.jpg" alt="BaryOn" />
+ <em>Ground rendered using barycentrics to perform smooth blending between materials</em></p>
+
+<p><img src="https://niadb.github.io/assets/barycentrics_off.jpg" alt="BaryOff" />
+ <em>Ground rendered without barycentrics, the material is selected from the base vertex and there is no blending between materials</em></p>
 
 
   </div>
@@ -142,8 +152,8 @@ This method is very fast and works well if you have an AMD card that supports it
         <ul class="social-media-list">
           
           <li>
-            <a href="https://github.com/trianglespct"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
-</span><span class="username">trianglespct</span></a>
+            <a href="https://github.com/niadb"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">niadb</span></a>
 
           </li>
           
@@ -153,7 +163,7 @@ This method is very fast and works well if you have an AMD card that supports it
       </div>
 
       <div class="footer-col footer-col-3">
-        <p>Game Dev, Programming, SIMD, GPU</p>
+        <p>Game Dev, Programming, SIMD, GPU, Voxels</p>
       </div>
     </div>
 

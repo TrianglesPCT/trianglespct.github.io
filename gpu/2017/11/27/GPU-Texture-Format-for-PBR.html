@@ -7,10 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>Choosing a PBR Texture Format</title>
-  <meta name="description" content="Objective: encode a full PBR set of channels into as few bits as possible, with good performance.">
+  <meta name="description" content="Objective: encode a full PBR (physically-based rendering) set of channels into as few bits as possible, with good performance.">
 
   <link rel="stylesheet" href="/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html">
+  <link rel="canonical" href="https://niadb.github.io/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html">
   <link rel="alternate" type="application/rss+xml" title="Comehither" href="/feed.xml">
   
   
@@ -46,7 +46,7 @@
           
             
             
-            <a class="page-link" href="/pages/Normals.html">A page</a>
+            <a class="page-link" href="/pages/VoxelEngine.html">Voxel Engine</a>
             
           
             
@@ -80,39 +80,45 @@
   </header>
 
   <div class="post-content" itemprop="articleBody">
-    <p>Objective: encode a full PBR set of channels into as few bits as possible, with good performance.</p>
+    <p><strong>Objective</strong>: <em>encode a full <a href="https://www.allegorithmic.com/pbr-guide">PBR</a> (physically-based rendering) set of channels into as few bits as possible, with good performance</em>.</p>
 
-<iframe width="420" height="315" src="https://youtu.be/VwPyMzuu7tk" frameborder="0" allowfullscreen=""></iframe>
+<p><img src="https://niadb.github.io/assets/greenshadow.jpg" alt="Using PBR textures" />
+<strong>Game after PBR textures were added</strong>
+<img src="https://niadb.github.io/assets/metals.jpg" alt="Metals" />
+<strong>Metals are visible here</strong></p>
 
 <p>Performance tests on my AMD GPU show that each additional texture adds significant cost, using 3 textures to encode the PBR signal with a size of 2 bytes per texel is much more costly than 2 textures at the same overall number of bytes per texel.</p>
 
 <p>The PBR system I’m using has 8 channels:</p>
 
-<p>3 base color
-2 normal 
-1 roughness
-1 metallic
-1 AO</p>
+<ul>
+  <li>3 base color</li>
+  <li>2 normal</li>
+  <li>1 roughness</li>
+  <li>1 metallic</li>
+  <li>1 AO</li>
+</ul>
 
 <p>If we attempt to store the normal in <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb694531(v=vs.85).aspx#BC5">BC5</a>, a two channel format designed specifically for tangent space normals, we have 6 channels remaining, and cannot fit that into a single texture, as none of them support more than 4 channels.
 So we cannot use BC5.</p>
 
 <p>There are two good options I’ve found instead, both using the same layout, two textures, both with 4 channels.</p>
 
-<p>On anything D3D11 and newer, <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/hh308953(v=vs.85).aspx">BC7</a> can be used.
-For pre-D3D11 systems, <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb694531(v=vs.85).aspx#BC3">BC3</a> textures can be used instead.</p>
+<p>On anything D3D11 and newer, <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/hh308953(v=vs.85).aspx">BC7</a> can be used.<br />
+  For pre-D3D11 systems, <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb694531(v=vs.85).aspx#BC3">BC3</a> textures can be used.</p>
 
-<p>The normal will be split and stored into the alpha channels, which should help preserve precision of the normal.</p>
+<p>The normal will be split and stored into the alpha channels, which will help preserve precision since alpha channels are treated separately.</p>
 
-<p>Texture1: RGB: base color A: normal.x 
-Texture2: RGB: ao, roughness, metallic.  A: normal.y</p>
+<p><strong>Texture1</strong>: RGB: base color A: normal.x</p>
 
-<p>*Texture1 can be safety set to SRGB, as both BC3 and BC7 treat the alpha as linear.</p>
+<p><strong>Texture2</strong>: RGB: ao, roughness, metallic.  A: normal.y</p>
+
+<p><em>Texture1 can be safety set to SRGB, as both BC3 and BC7 treat the alpha as linear.</em></p>
 
 <p>Uncompressed signal: 8 bytes 
 Compressed: 2 bytes in both BC3 and BC7 formats</p>
 
-<p>Encoding speed:</p>
+<p><strong>Encoding speed</strong></p>
 
 <p>Using <a href="https://github.com/GPUOpen-Tools/Compressonator">AMD Compressonator</a> BC3 is fast to encode, even with quality set high it churn through BC3 fairly quickly.</p>
 
@@ -124,11 +130,12 @@ This is understandable as the format is vastly more complex.</p>
 
 <p>With the quality set to low, it still takes much longer than BC3 at high quality.</p>
 
-<p>BC format Impact on Rendering: 
-There is no observable difference in rendering performance between BC3 and BC7 on my AMD 280x.<br />
+<p><strong>BC format Impact on Rendering</strong></p>
+
+<p>There is no observable difference in rendering performance between BC3 and BC7 on my AMD 280x.<br />
 Both are observably faster than uncompressed, not surprising given that uncompressed is 4x larger.</p>
 
-<p>BC3 vs BC7 Visual Quality:</p>
+<p><strong>BC3 vs BC7 Visual Quality</strong></p>
 
 <p>I have only run BC7 high quality on a few images, I’d probably have to run it overnight and then some to generate high quality BC7 for everything.</p>
 
@@ -140,19 +147,27 @@ Both are observably faster than uncompressed, not surprising given that uncompre
 
 <p>For anything with smooth gradients BC7 is clearly superior.</p>
 
-<p>Normals:</p>
+<p><strong>BC7 Mode Bits</strong></p>
+
+<p>An unfortunate aspect of BC7 is the way the mode bits work, for those modes using alpha it wastes a surprising number of bits just to say which mode it is in. <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/hh308954(v=vs.85).aspx#mode_7">Mode 7</a> uses an entire byte.</p>
+
+<p>Considering there are only 8 modes I’m not sure why they didn’t use 3 bits to encode them, instead of giving each mode a specific bit index.
+ I guess they really wanted to favor mode 0 and 1? Or perhaps this format was easier to implement in hardware?</p>
+
+<p><strong>Normals</strong></p>
 
 <p>BC3 has dedicated 8 bit end points and 3 bit indices for the alpha channel, while BC7 may or may not even have dedicated indices for alpha, as this is chosen on a per block basis.</p>
 
-<p>There is no obvious difference in the normals, but when I zoom in I can occasional spot areas where BC3 appears to have done a better job, but this is rare, and the overall improvements in the other channels is larger improvement than this small loss. Also running BC7 high quality may change this–</p>
+<p>There is no obvious difference in the normals, but when I zoom in I can occasional spot areas where BC3 appears to have done a better job, but this is rare, and the overall improvements in the other channels seems a larger improvement than this loss. Running BC7 high quality may change this–</p>
 
-<p>Size on Disk: 
-Both BC3 and BC7 are 8 bits per pixel
+<p><strong>Size on Disk</strong></p>
+
+<p>Both BC3 and BC7 are 8 bits per pixel
 When bit compressed, in this case with zstd, the BC7 files are generally about 1-2% smaller.</p>
 
-<p>I tried <a href="an LZMA variant">lzham</a>, but the files are only about 5% smaller than zstd level 19, not worth the 5x slower decode.</p>
+<p>I tried <a href="an LZMA variant">lzham</a>, but the files are only about 5% smaller than zstd level 19, not worth the 4x slower decode.</p>
 
-<p>Possible/Future Improvements:</p>
+<p><strong>Possible/Future Improvements</strong></p>
 
 <ol>
   <li>
@@ -160,6 +175,9 @@ When bit compressed, in this case with zstd, the BC7 files are generally about 1
   </li>
   <li>
     <p>The normals in the normal map are in euclidean space, this wastes bits since some values are never used. Octahedral coordinates make better use of the available bits, and decoding isn’t really much different.</p>
+  </li>
+  <li>
+    <p>The metal channel is often not used, so for many textures it is possible to reuse this channel to store something else, such as anisotropic roughness or subsurface information.</p>
   </li>
 </ol>
 
@@ -194,8 +212,8 @@ When bit compressed, in this case with zstd, the BC7 files are generally about 1
         <ul class="social-media-list">
           
           <li>
-            <a href="https://github.com/trianglespct"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
-</span><span class="username">trianglespct</span></a>
+            <a href="https://github.com/niadb"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">niadb</span></a>
 
           </li>
           
@@ -205,7 +223,7 @@ When bit compressed, in this case with zstd, the BC7 files are generally about 1
       </div>
 
       <div class="footer-col footer-col-3">
-        <p>Game Dev, Programming, SIMD, GPU</p>
+        <p>Game Dev, Programming, SIMD, GPU, Voxels</p>
       </div>
     </div>
 

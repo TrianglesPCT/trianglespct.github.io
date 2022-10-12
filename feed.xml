@@ -1,36 +1,114 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.6.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2017-12-17T15:36:07-07:00</updated><id>http://localhost:4000/</id><title type="html">Comehither</title><subtitle>Game Dev, Programming, SIMD, GPU</subtitle><entry><title type="html">Choosing a PBR Texture Format</title><link href="http://localhost:4000/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html" rel="alternate" type="text/html" title="Choosing a PBR Texture Format" /><published>2017-11-27T10:20:08-07:00</published><updated>2017-11-27T10:20:08-07:00</updated><id>http://localhost:4000/gpu/2017/11/27/GPU%20Texture%20Format%20for%20PBR</id><content type="html" xml:base="http://localhost:4000/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html">&lt;p&gt;Objective: encode a full PBR set of channels into as few bits as possible, with good performance.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.6.2">Jekyll</generator><link href="https://niadb.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://niadb.github.io/" rel="alternate" type="text/html" /><updated>2018-01-24T08:21:17-07:00</updated><id>https://niadb.github.io/</id><title type="html">Comehither</title><subtitle>Game Dev, Programming, SIMD, GPU, Voxels</subtitle><entry><title type="html">Quasi Virtual Texturing System</title><link href="https://niadb.github.io/gpu/2017/12/04/Quasi-Virtual-Texturing-System.html" rel="alternate" type="text/html" title="Quasi Virtual Texturing System" /><published>2017-12-04T10:20:08-07:00</published><updated>2017-12-04T10:20:08-07:00</updated><id>https://niadb.github.io/gpu/2017/12/04/Quasi%20Virtual%20Texturing%20System</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/12/04/Quasi-Virtual-Texturing-System.html">&lt;p&gt;This is an overview of a quasi virtual texturing system that I implemented for my game.&lt;/p&gt;
 
-&lt;iframe width=&quot;420&quot; height=&quot;315&quot; src=&quot;https://youtu.be/VwPyMzuu7tk&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+&lt;p&gt;I use this system instead of a traditional virtual texturing system for the following reasons.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Supports all levels of anisotropic/trilinear filtering, even on old hardware&lt;/li&gt;
+  &lt;li&gt;Doesn’t use &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/windows/desktop/dn786477(v=vs.85).aspx&quot;&gt;tiled resources&lt;/a&gt; which require newer GPUs, and aren’t available on Windows 7 with d3d11&lt;/li&gt;
+  &lt;li&gt;I use triplanar texturing exclusively, and do not have traditional UVs&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;strong&gt;Algorithm&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;This algorithm uses a fixed sized amount of memory for textures on the GPU.&lt;/p&gt;
+
+&lt;p&gt;I also limit all textures to square powers of 2,  the only sizes supported are 256,512,1024, and 2048.&lt;/p&gt;
+
+&lt;p&gt;I pre-generated a texture array that contains all of the mips of size 256 and under, for all textures.&lt;/p&gt;
+
+&lt;p&gt;I also allocate fixed sized arrays for 512,1024 and 2048; with the larger sizes having progressively fewer slots.&lt;/p&gt;
+
+&lt;p&gt;I’ll refer to each of these arrays as a layer.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Number of slots&lt;/em&gt; : Here are the number of slots I have per layer, these numbers are mostly arbitrary.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;256: # of textures&lt;/li&gt;
+  &lt;li&gt;512: 128 slots&lt;/li&gt;
+  &lt;li&gt;1024: 32 slots&lt;/li&gt;
+  &lt;li&gt;2048: 8 slots&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Here is a visualization of the layers.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/virtual_texture_layers.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;
+  &lt;em&gt;Yellow is 256, Green is 512, Blue is 1024, and Red is 2048.&lt;br /&gt;
+  I force everything to use 256 past a certain distance to reduce divergence&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;In addition a structured buffer is used as an indirection mapping; pass in the material ID, and retrieve which array to sample from(the layer), and which slot in the array.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Prioritizing Textures&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;As there is a limited number of high resolution textures that can be on the GPU at any given time, a system to was needed to determine which textures 
+  should be resident.&lt;/p&gt;
+
+&lt;p&gt;This is done by storing the N most important textures, along with a score, for each voxel patch.&lt;/p&gt;
+
+&lt;p&gt;The score is simple the number of vertices that reference the texture.&lt;/p&gt;
+
+&lt;p&gt;Each frame, for visible patches, the score is added to the appropriate textures/MIP based on the distance from the camera for the patch.&lt;/p&gt;
+
+&lt;p&gt;Patches which are out of the frustum or occluded do not get added.&lt;/p&gt;
+
+&lt;p&gt;The textures/mip with the highest score, that is not resident on the GPU is then considered for uploaded, if it has a higher score than a resident texture at the same mip level.&lt;/p&gt;
+
+&lt;p&gt;Only one texture is uploaded per frame, to limit the amount of data that needs to be transferred.&lt;/p&gt;
+
+&lt;p&gt;The structured buffer is also updated to reflect where the GPU can find the texture.&lt;/p&gt;
+
+&lt;p&gt;Latency is reduced by having the CPU side also store a cache of recently accessed textures, the caches size is adjustable, but is currently set to 300mb.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Results&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The system works well and transparently pages in texture data based on visibility.&lt;/p&gt;
+
+&lt;p&gt;It never suffers from horribly blurry textures since the 256 mips are always available as a fallback.&lt;/p&gt;
+
+&lt;p&gt;Even standing still and turning the camera around can and will cause textures to be paged in/out.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Limitations&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;D3d11 has a max texture array size of 2048. This means this system can only support 2048 separate materials. I am nowhere near this limit, so this isn’t an issue for me.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><summary type="html">This is an overview of a quasi virtual texturing system that I implemented for my game. I use this system instead of a traditional virtual texturing system for the following reasons.</summary></entry><entry><title type="html">Choosing a PBR Texture Format</title><link href="https://niadb.github.io/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html" rel="alternate" type="text/html" title="Choosing a PBR Texture Format" /><published>2017-11-27T10:20:08-07:00</published><updated>2017-11-27T10:20:08-07:00</updated><id>https://niadb.github.io/gpu/2017/11/27/GPU%20Texture%20Format%20for%20PBR</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/11/27/GPU-Texture-Format-for-PBR.html">&lt;p&gt;&lt;strong&gt;Objective&lt;/strong&gt;: &lt;em&gt;encode a full &lt;a href=&quot;https://www.allegorithmic.com/pbr-guide&quot;&gt;PBR&lt;/a&gt; (physically-based rendering) set of channels into as few bits as possible, with good performance&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/greenshadow.jpg&quot; alt=&quot;Using PBR textures&quot; /&gt;
+&lt;strong&gt;Game after PBR textures were added&lt;/strong&gt;
+&lt;img src=&quot;https://niadb.github.io/assets/metals.jpg&quot; alt=&quot;Metals&quot; /&gt;
+&lt;strong&gt;Metals are visible here&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;Performance tests on my AMD GPU show that each additional texture adds significant cost, using 3 textures to encode the PBR signal with a size of 2 bytes per texel is much more costly than 2 textures at the same overall number of bytes per texel.&lt;/p&gt;
 
 &lt;p&gt;The PBR system I’m using has 8 channels:&lt;/p&gt;
 
-&lt;p&gt;3 base color
-2 normal 
-1 roughness
-1 metallic
-1 AO&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;3 base color&lt;/li&gt;
+  &lt;li&gt;2 normal&lt;/li&gt;
+  &lt;li&gt;1 roughness&lt;/li&gt;
+  &lt;li&gt;1 metallic&lt;/li&gt;
+  &lt;li&gt;1 AO&lt;/li&gt;
+&lt;/ul&gt;
 
 &lt;p&gt;If we attempt to store the normal in &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/windows/desktop/bb694531(v=vs.85).aspx#BC5&quot;&gt;BC5&lt;/a&gt;, a two channel format designed specifically for tangent space normals, we have 6 channels remaining, and cannot fit that into a single texture, as none of them support more than 4 channels.
 So we cannot use BC5.&lt;/p&gt;
 
 &lt;p&gt;There are two good options I’ve found instead, both using the same layout, two textures, both with 4 channels.&lt;/p&gt;
 
-&lt;p&gt;On anything D3D11 and newer, &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/windows/desktop/hh308953(v=vs.85).aspx&quot;&gt;BC7&lt;/a&gt; can be used.
-For pre-D3D11 systems, &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/windows/desktop/bb694531(v=vs.85).aspx#BC3&quot;&gt;BC3&lt;/a&gt; textures can be used instead.&lt;/p&gt;
+&lt;p&gt;On anything D3D11 and newer, &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/windows/desktop/hh308953(v=vs.85).aspx&quot;&gt;BC7&lt;/a&gt; can be used.&lt;br /&gt;
+  For pre-D3D11 systems, &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/windows/desktop/bb694531(v=vs.85).aspx#BC3&quot;&gt;BC3&lt;/a&gt; textures can be used.&lt;/p&gt;
 
-&lt;p&gt;The normal will be split and stored into the alpha channels, which should help preserve precision of the normal.&lt;/p&gt;
+&lt;p&gt;The normal will be split and stored into the alpha channels, which will help preserve precision since alpha channels are treated separately.&lt;/p&gt;
 
-&lt;p&gt;Texture1: RGB: base color A: normal.x 
-Texture2: RGB: ao, roughness, metallic.  A: normal.y&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Texture1&lt;/strong&gt;: RGB: base color A: normal.x&lt;/p&gt;
 
-&lt;p&gt;*Texture1 can be safety set to SRGB, as both BC3 and BC7 treat the alpha as linear.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Texture2&lt;/strong&gt;: RGB: ao, roughness, metallic.  A: normal.y&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Texture1 can be safety set to SRGB, as both BC3 and BC7 treat the alpha as linear.&lt;/em&gt;&lt;/p&gt;
 
 &lt;p&gt;Uncompressed signal: 8 bytes 
 Compressed: 2 bytes in both BC3 and BC7 formats&lt;/p&gt;
 
-&lt;p&gt;Encoding speed:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Encoding speed&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;Using &lt;a href=&quot;https://github.com/GPUOpen-Tools/Compressonator&quot;&gt;AMD Compressonator&lt;/a&gt; BC3 is fast to encode, even with quality set high it churn through BC3 fairly quickly.&lt;/p&gt;
 
@@ -42,11 +120,12 @@ This is understandable as the format is vastly more complex.&lt;/p&gt;
 
 &lt;p&gt;With the quality set to low, it still takes much longer than BC3 at high quality.&lt;/p&gt;
 
-&lt;p&gt;BC format Impact on Rendering: 
-There is no observable difference in rendering performance between BC3 and BC7 on my AMD 280x.&lt;br /&gt;
+&lt;p&gt;&lt;strong&gt;BC format Impact on Rendering&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;There is no observable difference in rendering performance between BC3 and BC7 on my AMD 280x.&lt;br /&gt;
 Both are observably faster than uncompressed, not surprising given that uncompressed is 4x larger.&lt;/p&gt;
 
-&lt;p&gt;BC3 vs BC7 Visual Quality:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;BC3 vs BC7 Visual Quality&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;I have only run BC7 high quality on a few images, I’d probably have to run it overnight and then some to generate high quality BC7 for everything.&lt;/p&gt;
 
@@ -58,19 +137,27 @@ Both are observably faster than uncompressed, not surprising given that uncompre
 
 &lt;p&gt;For anything with smooth gradients BC7 is clearly superior.&lt;/p&gt;
 
-&lt;p&gt;Normals:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;BC7 Mode Bits&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;An unfortunate aspect of BC7 is the way the mode bits work, for those modes using alpha it wastes a surprising number of bits just to say which mode it is in. &lt;a href=&quot;https://msdn.microsoft.com/en-us/library/windows/desktop/hh308954(v=vs.85).aspx#mode_7&quot;&gt;Mode 7&lt;/a&gt; uses an entire byte.&lt;/p&gt;
+
+&lt;p&gt;Considering there are only 8 modes I’m not sure why they didn’t use 3 bits to encode them, instead of giving each mode a specific bit index.
+ I guess they really wanted to favor mode 0 and 1? Or perhaps this format was easier to implement in hardware?&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Normals&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;BC3 has dedicated 8 bit end points and 3 bit indices for the alpha channel, while BC7 may or may not even have dedicated indices for alpha, as this is chosen on a per block basis.&lt;/p&gt;
 
-&lt;p&gt;There is no obvious difference in the normals, but when I zoom in I can occasional spot areas where BC3 appears to have done a better job, but this is rare, and the overall improvements in the other channels is larger improvement than this small loss. Also running BC7 high quality may change this–&lt;/p&gt;
+&lt;p&gt;There is no obvious difference in the normals, but when I zoom in I can occasional spot areas where BC3 appears to have done a better job, but this is rare, and the overall improvements in the other channels seems a larger improvement than this loss. Running BC7 high quality may change this–&lt;/p&gt;
 
-&lt;p&gt;Size on Disk: 
-Both BC3 and BC7 are 8 bits per pixel
+&lt;p&gt;&lt;strong&gt;Size on Disk&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Both BC3 and BC7 are 8 bits per pixel
 When bit compressed, in this case with zstd, the BC7 files are generally about 1-2% smaller.&lt;/p&gt;
 
-&lt;p&gt;I tried &lt;a href=&quot;an LZMA variant&quot;&gt;lzham&lt;/a&gt;, but the files are only about 5% smaller than zstd level 19, not worth the 5x slower decode.&lt;/p&gt;
+&lt;p&gt;I tried &lt;a href=&quot;an LZMA variant&quot;&gt;lzham&lt;/a&gt;, but the files are only about 5% smaller than zstd level 19, not worth the 4x slower decode.&lt;/p&gt;
 
-&lt;p&gt;Possible/Future Improvements:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Possible/Future Improvements&lt;/strong&gt;&lt;/p&gt;
 
 &lt;ol&gt;
   &lt;li&gt;
@@ -79,23 +166,131 @@ When bit compressed, in this case with zstd, the BC7 files are generally about 1
   &lt;li&gt;
     &lt;p&gt;The normals in the normal map are in euclidean space, this wastes bits since some values are never used. Octahedral coordinates make better use of the available bits, and decoding isn’t really much different.&lt;/p&gt;
   &lt;/li&gt;
-&lt;/ol&gt;</content><author><name></name></author><summary type="html">Objective: encode a full PBR set of channels into as few bits as possible, with good performance.</summary></entry><entry><title type="html">Relative Vertex Normals</title><link href="http://localhost:4000/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html" rel="alternate" type="text/html" title="Relative Vertex Normals" /><published>2017-11-05T10:20:08-07:00</published><updated>2017-11-05T10:20:08-07:00</updated><id>http://localhost:4000/gpu/2017/11/05/Higher%20Quality%20Vertex%20Normals</id><content type="html" xml:base="http://localhost:4000/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html">&lt;p&gt;I use the &lt;a href=&quot;http://jcgt.org/published/0003/02/01/paper.pdf&quot;&gt;Oct16&lt;/a&gt; format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.&lt;/p&gt;
+  &lt;li&gt;
+    &lt;p&gt;The metal channel is often not used, so for many textures it is possible to reuse this channel to store something else, such as anisotropic roughness or subsurface information.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;</content><author><name></name></author><summary type="html">Objective: encode a full PBR (physically-based rendering) set of channels into as few bits as possible, with good performance.</summary></entry><entry><title type="html">Adding SDF Collision to Bullet Physics</title><link href="https://niadb.github.io/c++/2017/11/15/Adding-SDF-support-to-Bullet-Physics.html" rel="alternate" type="text/html" title="Adding SDF Collision to Bullet Physics" /><published>2017-11-15T10:20:08-07:00</published><updated>2017-11-15T10:20:08-07:00</updated><id>https://niadb.github.io/c++/2017/11/15/Adding%20SDF%20support%20to%20Bullet%20Physics</id><content type="html" xml:base="https://niadb.github.io/c++/2017/11/15/Adding-SDF-support-to-Bullet-Physics.html">&lt;p&gt;&lt;a href=&quot;http://bulletphysics.org/wordpress/&quot;&gt;Bullet Physics&lt;/a&gt; is an open source physics engine that is sometimes used for games and movies.&lt;/p&gt;
+
+&lt;p&gt;It supports many near phase collision types such as spheres, boxes, capsules, triangle meshes and convex hulls.&lt;/p&gt;
+
+&lt;p&gt;None of these were a good match for my signed distance fields(&lt;a href=&quot;https://en.wikipedia.org/wiki/Signed_distance_function&quot;&gt;SDF&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;Triangle meshes might seem like a solution, but they have two obvious issues.&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;No volume which leads to penetration issues and bad collision detection&lt;/li&gt;
+  &lt;li&gt;Uses lots of memory to store the mesh&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Convex hulls might also seem like a solution, but also have a downsides&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;They only work with convex data. To work with concave data you must generate multiple hulls and stick them together.&lt;/li&gt;
+  &lt;li&gt;Not very accurate representation of the original shape unless you stitch &lt;em&gt;many&lt;/em&gt; of them together, this would be infeasible for the world/terrain shape which is many kilometres in size&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;So I decided to extend bullet to directly support &lt;a href=&quot;https://en.wikipedia.org/wiki/Signed_distance_function&quot;&gt;SDF&lt;/a&gt; vs &lt;a href=&quot;https://en.wikipedia.org/wiki/Signed_distance_function&quot;&gt;SDF&lt;/a&gt; collision.&lt;/p&gt;
+
+&lt;p&gt;As everything in my game world is represented by an &lt;a href=&quot;https://en.wikipedia.org/wiki/Signed_distance_function&quot;&gt;SDF&lt;/a&gt;, I do not need any of bullets built in collision types and only use &lt;a href=&quot;https://en.wikipedia.org/wiki/Signed_distance_function&quot;&gt;SDF&lt;/a&gt; vs &lt;a href=&quot;https://en.wikipedia.org/wiki/Signed_distance_function&quot;&gt;SDF&lt;/a&gt; collision.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Collision Algorithm&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The solution I went with is based on generating a point hull for the SDF, a point hull is a list of points that lie within the shapes negative space. 
+   In my implementation all points in a given hull uses the same radius.&lt;/p&gt;
+
+&lt;p&gt;To perform collision detection between two SDFs, you treat one of them as a point hull and the other as an SDF. You transform each point in the point hull into the space of the SDF and sample the SDF. If the distance to the negative space is &amp;lt;= the point hulls radius, you have a collision.&lt;/p&gt;
+
+&lt;p&gt;I decide which object will act as the point hull based on who has the smaller point hull radius, this ensures consistent collision, and allows for the smaller object to collide against the larger objects full SDF.&lt;/p&gt;
+
+&lt;p&gt;For the world/terrain shape I disable the point hull generation pass, it is always treated as the SDF when colliding.&lt;/p&gt;
+
+&lt;p&gt;For points that are found to be colliding, a second pass is run to generate the normal and collision depth, and to reduce the number of impact points down to four(this is the number of points bullet wants fed to it).&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Result&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;SDF vs SDF supports both convex and concave shapes.&lt;/p&gt;
+
+&lt;p&gt;It also has fewer issues with penetration than triangle meshes since SDFs have proper volume, even if a small object penetrates into  a larger one, it will still be pushed out in the correct direction.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/shapeforpointhull.jpg&quot; alt=&quot;SDFShape1&quot; /&gt;
+  Here is a shape for which we will generate a point hull&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/pointhull.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;And here is a visualization of the point hull.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Optimizations&lt;/strong&gt; &lt;em&gt;sometimes known as midphase&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;There are numerous ways to optimize this, but here are some that I use. The underlying SDF algorithms are already all SIMD, so this is focused on algorithmic optimizations.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Surface Approximate&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Instead of sampling the full SDF against all of the points, I first run a pass that only samples eight points on the point hulls AABB within the SDF.  It then uses those eight points to perform a quick rejection of points that incapable of colliding because they are too far away. This often eliminates &amp;gt;90% of the points, so we can skip full SDF evaluation.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Temporal Collision Frame&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;This is a frame that is specific to a given object vs object collision, it records a rough approximation of the previous collision attempt between the two shapes.
+ If not enough movement or rotation has occurred it can early out and skip performing the full near phase–the previous contact points are reused.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Handling SDFs with broken distance formulas&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Otherwise known as &lt;a href=&quot;https://en.wikipedia.org/wiki/Lipschitz_continuity&quot;&gt;Lipschitz&lt;/a&gt; continuous– we want gradients whose magnitude is as close to 1 as possible.&lt;/p&gt;
+
+&lt;p&gt;Some SDFs do not have euclidean correct distances, for these cases I run a fix up step which calculates a correction factor based on the rate of change in the local space of the SDF.&lt;/p&gt;
+
+&lt;p&gt;My correction algorithm takes the distances calculated for the AABB of the point hull projected into the SDFs space, and compares the true distance between the points against the distance returned by the SDF. It compares all of the points against each other, and uses the largest ratio of (sdf distance/true distance) as the correction factor.&lt;/p&gt;
+
+&lt;p&gt;This allows for colliding against fractals and other complex formulas, which often have incorrect distance formulas.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Performance Notes&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;In scenes with many moving &amp;amp; colliding objects:&lt;/p&gt;
+
+&lt;p&gt;Initially my SDF near phase and Bullets solver were about equal in cycle usage.&lt;/p&gt;
+
+&lt;p&gt;After adding various optimizations to reduce the time spent in the SDF near phase, the solver is now the primary waster of cycles.&lt;/p&gt;
+
+&lt;p&gt;Bullets solver has a few SSE based implementations, but they are AoS not SoA based, so the performance gain is minimal.&lt;/p&gt;
+
+&lt;p&gt;Bullet has a few inefficiencies in how it works, it loves to iterate over every single CollisionObject just to access a single bool, while this is not a problem for small scenes, 
+ it does not scale to the number of physics objects I plan to use.&lt;/p&gt;
+
+&lt;p&gt;I plan to rework this part of Bullet in my local copy, and have already rewritten/removed a few passes Bullet was performing that I did not need.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Pseudo Continuous Collision Detection&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Bullet has some support for CCD(Continuous Collision Detection), but I’m using my own pseudo CCD instead.&lt;/p&gt;
+
+&lt;p&gt;My CCD solution is very simple:&lt;/p&gt;
+
+&lt;p&gt;Calculate the maximum distance an object can travel in a given physics tick based on its current velocity, and expand the point hulls radius to incorporate it.&lt;/p&gt;
+
+&lt;p&gt;At high speeds this causes expansion, but I cannot visually tell that this is happening.&lt;/p&gt;
+
+&lt;p&gt;I run physics at 120 hertz, but I did test it at 60 hertz and it seemed to work fine there also.&lt;/p&gt;
+
+&lt;p&gt;I’m not currently incorporating angular velocity, but I will probably add that at some point.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Future Work&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;The algorithm for placing points within the hull could always use more work.&lt;/li&gt;
+  &lt;li&gt;It might also be worth looking into storing a per point radius, this will allow for less points in some situations&lt;/li&gt;
+  &lt;li&gt;Angular Velocity for CCD&lt;/li&gt;
+&lt;/ol&gt;</content><author><name></name></author><summary type="html">Bullet Physics is an open source physics engine that is sometimes used for games and movies.</summary></entry><entry><title type="html">Relative Vertex Normals</title><link href="https://niadb.github.io/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html" rel="alternate" type="text/html" title="Relative Vertex Normals" /><published>2017-11-05T10:20:08-07:00</published><updated>2017-11-05T10:20:08-07:00</updated><id>https://niadb.github.io/gpu/2017/11/05/Higher%20Quality%20Vertex%20Normals</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html">&lt;p&gt;I use the &lt;a href=&quot;http://jcgt.org/published/0003/02/01/paper.pdf&quot;&gt;Oct16&lt;/a&gt; format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.&lt;/p&gt;
 
 &lt;p&gt;Most of the time this was sufficient, but under certain conditions artifacts were visible– such as the surface of a smoothly varying sphere using triplanar texturing, whose weights are based on the normals.&lt;/p&gt;
 
 &lt;p&gt;Here is a visualization of the Triplanar weights generated from the Oct16 normals.
-&lt;img src=&quot;http://localhost:4000/assets/oct16_bad.jpg&quot; alt=&quot;Oct16 Global&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;There is a very obvious diamond pattern visible.
+&lt;img src=&quot;https://niadb.github.io/assets/oct16_bad.jpg&quot; alt=&quot;Oct16 Global&quot; /&gt;
+There is a very obvious diamond pattern visible.
 Even switching to Oct20(10 bits per channel) does not completely solve this, the diamonds are much smaller, but they persist.&lt;/p&gt;
 
-&lt;p&gt;Oct16, but with custom scale/bias
-&lt;img src=&quot;http://localhost:4000/assets/oct16_good.jpg&quot; alt=&quot;Oct16 Relative&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Solution:&lt;/strong&gt; Use custom scale/bias to transform into relative coordinates
+&lt;img src=&quot;https://niadb.github.io/assets/oct16_good.jpg&quot; alt=&quot;Oct16 Relative&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Instead of adding bits, I decided to take advantage of the fact that most triangle patches only use a
 limited range of the world space normals.&lt;/p&gt;
 
-&lt;p&gt;I track min/max per channel for the entire patch, then encode the normals so that the full range of bits is used.&lt;/p&gt;
+&lt;p&gt;I track min/max per channel for the entire patch, then transform the normals so that the full range of bits is used.&lt;/p&gt;
 
 &lt;p&gt;Decoding in the shader requires a custom scale and bias parameter per channel(4 floats for the two channel Oct16).&lt;/p&gt;
 
@@ -103,7 +298,8 @@ limited range of the world space normals.&lt;/p&gt;
 
 &lt;p&gt;The 2nd image was encoded this way, the normals are still using Oct16, so only 16 bits per normal, but with a custom scale/bias per patch.&lt;/p&gt;
 
-&lt;p&gt;In the majority of cases this provides many extra bits of precision, and in the worst case it degrades back to standard Oct16.&lt;/p&gt;</content><author><name></name></author><summary type="html">I use the Oct16 format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.</summary></entry><entry><title type="html">Faster Triplanar Texturing</title><link href="http://localhost:4000/gpu/2017/11/01/Faster-Triplanar-Texturing.html" rel="alternate" type="text/html" title="Faster Triplanar Texturing" /><published>2017-11-01T11:20:08-06:00</published><updated>2017-11-01T11:20:08-06:00</updated><id>http://localhost:4000/gpu/2017/11/01/Faster%20Triplanar%20Texturing</id><content type="html" xml:base="http://localhost:4000/gpu/2017/11/01/Faster-Triplanar-Texturing.html">&lt;p&gt;Here is a method I created to improve performance when using Triplanar texturing.
+&lt;p&gt;In many important cases, such as on this sphere, this provides many extra bits of precision.&lt;br /&gt;
+ In the worst case it degrades back to standard Oct16.&lt;/p&gt;</content><author><name></name></author><summary type="html">I use the Oct16 format to encode my vertex normals, this format is two 8 bit channels in octahedral mapping.</summary></entry><entry><title type="html">Faster Triplanar Texturing</title><link href="https://niadb.github.io/gpu/2017/11/01/Faster-Triplanar-Texturing.html" rel="alternate" type="text/html" title="Faster Triplanar Texturing" /><published>2017-11-01T11:20:08-06:00</published><updated>2017-11-01T11:20:08-06:00</updated><id>https://niadb.github.io/gpu/2017/11/01/Faster%20Triplanar%20Texturing</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/11/01/Faster-Triplanar-Texturing.html">&lt;p&gt;Here is a method I created to improve performance when using Triplanar texturing.
 I also think it looks better.&lt;/p&gt;
 
 &lt;p&gt;So the standard triplanar texturing algorithm you will find in varous places on the internet looks something like this.&lt;/p&gt;
@@ -117,7 +313,7 @@ I also think it looks better.&lt;/p&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;If we visualize the blend zones this is what it looks like.
-&lt;img src=&quot;http://localhost:4000/assets/triplanar2.jpg&quot; alt=&quot;Blend Zones&quot; /&gt;&lt;/p&gt;
+&lt;img src=&quot;https://niadb.github.io/assets/triplanar2.jpg&quot; alt=&quot;Blend Zones&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Red/Green/Blue represent one texture sample.&lt;/p&gt;
 
@@ -132,7 +328,7 @@ I also think it looks better.&lt;/p&gt;
 &lt;p&gt;This results in needless texture sampling along aligned edges, stealing away our precious bandwidth.&lt;/p&gt;
 
 &lt;p&gt;Constant Blend Width
-&lt;img src=&quot;http://localhost:4000/assets/triplanar3.jpg&quot; alt=&quot;Constant Blend Width&quot; /&gt;&lt;/p&gt;
+&lt;img src=&quot;https://niadb.github.io/assets/triplanar3.jpg&quot; alt=&quot;Constant Blend Width&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;What we want is something more like this– constant blend width.&lt;/p&gt;
 
@@ -159,7 +355,16 @@ I also think it looks better.&lt;/p&gt;
 
 &lt;p&gt;I believe it also looks better–as there is less smearing along axis aligned edges.&lt;/p&gt;
 
-&lt;p&gt;Here is a &lt;a href=&quot;https://www.shadertoy.com/view/XlBcz3&quot;&gt;shadertoy&lt;/a&gt; I created if you want to play with it&lt;/p&gt;</content><author><name></name></author><summary type="html">Here is a method I created to improve performance when using Triplanar texturing. I also think it looks better.</summary></entry><entry><title type="html">Barycentric Coordinates in Pixel Shader</title><link href="http://localhost:4000/gpu/2017/10/28/Barycentric.html" rel="alternate" type="text/html" title="Barycentric Coordinates in Pixel Shader" /><published>2017-10-28T11:20:08-06:00</published><updated>2017-10-28T11:20:08-06:00</updated><id>http://localhost:4000/gpu/2017/10/28/Barycentric</id><content type="html" xml:base="http://localhost:4000/gpu/2017/10/28/Barycentric.html">&lt;p&gt;Recently I was in need a way to perform smooth blending between per vertex materials.&lt;/p&gt;
+&lt;p&gt;Here is a &lt;a href=&quot;https://www.shadertoy.com/view/XlBcz3&quot;&gt;shadertoy&lt;/a&gt; I created if you want to play with it&lt;/p&gt;
+
+&lt;div class=&quot;PageNavigation&quot;&gt;
+  
+    &lt;a class=&quot;prev&quot; href=&quot;/gpu/2017/10/28/Barycentric.html&quot;&gt;&amp;laquo; Barycentric Coordinates in Pixel Shader&lt;/a&gt;
+  
+  
+    &lt;a class=&quot;next&quot; href=&quot;/gpu/2017/11/05/Higher-Quality-Vertex-Normals.html&quot;&gt;Relative Vertex Normals &amp;raquo;&lt;/a&gt;
+  
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Here is a method I created to improve performance when using Triplanar texturing. I also think it looks better.</summary></entry><entry><title type="html">Barycentric Coordinates in Pixel Shader</title><link href="https://niadb.github.io/gpu/2017/10/28/Barycentric.html" rel="alternate" type="text/html" title="Barycentric Coordinates in Pixel Shader" /><published>2017-10-28T11:20:08-06:00</published><updated>2017-10-28T11:20:08-06:00</updated><id>https://niadb.github.io/gpu/2017/10/28/Barycentric</id><content type="html" xml:base="https://niadb.github.io/gpu/2017/10/28/Barycentric.html">&lt;p&gt;Recently I was in need a way to perform smooth blending between per vertex materials.&lt;/p&gt;
 
 &lt;p&gt;Basically I needed &lt;a href=&quot;https://en.wikipedia.org/wiki/Barycentric_coordinate_system&quot;&gt;barycentric coordinates&lt;/a&gt; + access to each vertices material in the pixel shader.&lt;/p&gt;
 
@@ -167,10 +372,12 @@ I also think it looks better.&lt;/p&gt;
 
 &lt;p&gt;Here is a list of some possible solutions:&lt;/p&gt;
 
-&lt;p&gt;Geometry Shader method:  Assign the coordinates: (1,0,0), (0,1,0), (0,0,1) to the vertices of the triangle.  Also write the three materials to each vertex.
+&lt;p&gt;&lt;strong&gt;Geometry Shader&lt;/strong&gt;:  Assign the coordinates: (1,0,0), (0,1,0), (0,0,1) to the vertices of the triangle.  Also write the three materials to each vertex.
 This method is easy to implement but has terrible performance on many cards, since it requires a geometry shader.  When enabled on my AMD card, FPS drops to half or less.&lt;/p&gt;
 
-&lt;p&gt;AMD AGS Driver extension:  AMD has a library called &lt;a href=&quot;https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK&quot;&gt;AGS_SDK&lt;/a&gt; which exposes driver extensions, one of these is direct access to barycentric coordinates in the pixel shader.  It also allows for direct access to any of the attributes from the 3 vertices that make up the triangle.
+&lt;p&gt;&lt;em&gt;The following two methods are D3D11/12 focused&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;AMD AGS Driver extension&lt;/strong&gt;:  AMD has a library called &lt;a href=&quot;https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK&quot;&gt;AGS_SDK&lt;/a&gt; which exposes driver extensions, one of these is direct access to barycentric coordinates in the pixel shader.  It also allows for direct access to any of the attributes from the 3 vertices that make up the triangle.
 This method is very fast and works well if you have an AMD card that supports it.&lt;/p&gt;
 
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c--&quot; data-lang=&quot;c++&quot;&gt; &lt;span class=&quot;n&quot;&gt;float2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bary2d&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsics_IjBarycentricCoords&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsicsBarycentric_PerspCenter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
@@ -182,21 +389,29 @@ This method is very fast and works well if you have an AMD card that supports it
  &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsics_VertexParameterComponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
  &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AmdDxExtShaderIntrinsics_VertexParameterComponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;p&gt;Nvidia FastGeometryShader: Nvidia also have driver extensions &lt;a href=&quot;https://developer.nvidia.com/nvapi&quot;&gt;NVAPI&lt;/a&gt;, and one of these is the the “fast geometry shader” for when you only need a subset of the features geometry shaders offer.
- It should be possible to use this to pass down barycentric coordinates &amp;amp; materials , but I do not have an Nvidia card to test this on.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Nvidia FastGeometryShader&lt;/strong&gt;: Nvidia also have driver extensions &lt;a href=&quot;https://developer.nvidia.com/nvapi&quot;&gt;NVAPI&lt;/a&gt;, and one of these is the the “fast geometry shader” for when you only need a subset of the features geometry shaders offer.
+ It should be possible to use this to pass down barycentric coordinates &amp;amp; materials, but I do not have an Nvidia card to test this on.&lt;/p&gt;
 
-&lt;p&gt;Domain Shader?: I haven’t tried this method, but I think it might be possible to pass down barycentric coordinates from a domain shader?&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Embed Into Vertex Data&lt;/strong&gt;: Another option is to enlarge the vertex, and embed the barycentric coordinates and the 3 materials directly into it.
+ This is probably a better fallback than the GS, although it does have the downside of reducing vertex reuse, since many vertices that were previously identical would now differ.&lt;/p&gt;
 
-&lt;p&gt;Embed Into Vertex Data: Another option is to enlarge the vertex, and embed the barycentric coordinates and the 3 materials directly into it.
- This is probably a better fallback than the GS, although it does have the downside of reducing vertex reuse, since many vertices that were previously identical would now differ.&lt;/p&gt;</content><author><name></name></author><summary type="html">Recently I was in need a way to perform smooth blending between per vertex materials.</summary></entry><entry><title type="html">AVX2 Gather Performance</title><link href="http://localhost:4000/avx/2017/10/15/AVX2-Gather.html" rel="alternate" type="text/html" title="AVX2 Gather Performance" /><published>2017-10-15T11:20:08-06:00</published><updated>2017-10-15T11:20:08-06:00</updated><id>http://localhost:4000/avx/2017/10/15/AVX2%20Gather</id><content type="html" xml:base="http://localhost:4000/avx/2017/10/15/AVX2-Gather.html">&lt;p&gt;Masked Gather vs Unmasked Gather&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Domain Shader?&lt;/em&gt;: I haven’t tried this method, but I think it might be possible to pass down barycentric coordinates from a domain shader&lt;/p&gt;
 
-&lt;p&gt;AVX2 has masked gather instructions(_mm_mask_i32gather_epi32 etc), these have two additional parameters, a mask, and a default value that is used when the mask is false.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Visual Comparison&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/barycentrics_on.jpg&quot; alt=&quot;BaryOn&quot; /&gt;
+ &lt;em&gt;Ground rendered using barycentrics to perform smooth blending between materials&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/barycentrics_off.jpg&quot; alt=&quot;BaryOff&quot; /&gt;
+ &lt;em&gt;Ground rendered without barycentrics, the material is selected from the base vertex and there is no blending between materials&lt;/em&gt;&lt;/p&gt;</content><author><name></name></author><summary type="html">Recently I was in need a way to perform smooth blending between per vertex materials.</summary></entry><entry><title type="html">AVX2 Gather Performance</title><link href="https://niadb.github.io/avx/2017/10/15/AVX2-Gather.html" rel="alternate" type="text/html" title="AVX2 Gather Performance" /><published>2017-10-15T11:20:08-06:00</published><updated>2017-10-15T11:20:08-06:00</updated><id>https://niadb.github.io/avx/2017/10/15/AVX2%20Gather</id><content type="html" xml:base="https://niadb.github.io/avx/2017/10/15/AVX2-Gather.html">&lt;p&gt;&lt;strong&gt;Masked Gather vs Unmasked Gather&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;AVX2 has masked gather instructions(&lt;a href=&quot;https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_mask_i32gather_epi32&amp;amp;expand=2810,2810&quot;&gt;_mm_mask_i32gather_epi32&lt;/a&gt; etc), these have two additional parameters, a mask, and a default value that is used when the mask is false.&lt;/p&gt;
 
 &lt;p&gt;I was hoping masked gathers would be accelerated, such that when most of the lanes were masked off, the gather would complete sooner, but this does not appear to be the case.&lt;/p&gt;
 
 &lt;p&gt;The performance of masked and unmasked gathers was very similar, but masked gathers were consistently slower than unmasked gathers.&lt;/p&gt;
 
-&lt;p&gt;Load vs Gather vs Software Gather&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Load vs Gather vs Software Gather&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;To compare gather with load, I created a buffer and run through it in linear order summing the values.
  I forced the gathers to load from the same indices the load was operating on.  Indices(0,1,2,3,4,5,6,7), incremented by 8 for each loop.&lt;/p&gt;
@@ -204,7 +419,7 @@ This method is very fast and works well if you have an AMD card that supports it
 &lt;p&gt;Software gather loaded each index using scalar loads instead of the hardware intrinsics.
 Gather was generally ~1.2-1.5x faster than software gather.&lt;/p&gt;
 
-&lt;p&gt;Performance was depended upon the cache level that buffer fit into.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Performance was depended upon the cache level that buffer fit into.&lt;/em&gt;&lt;/p&gt;
 
 &lt;p&gt;Buffer fits in L1&lt;/p&gt;
 
@@ -218,7 +433,16 @@ Gather was generally ~1.2-1.5x faster than software gather.&lt;/p&gt;
 
 &lt;p&gt;Load tapers off to ~2.x faster than Gather&lt;/p&gt;
 
-&lt;p&gt;This was all run on a Haswell, newer chips might perform differently.&lt;/p&gt;</content><author><name></name></author><summary type="html">Masked Gather vs Unmasked Gather</summary></entry><entry><title type="html">Moment of Inertia for a Distance Field</title><link href="http://localhost:4000/physics/2017/09/17/Moment-Of-Inertia.html" rel="alternate" type="text/html" title="Moment of Inertia for a Distance Field" /><published>2017-09-17T11:20:08-06:00</published><updated>2017-09-17T11:20:08-06:00</updated><id>http://localhost:4000/physics/2017/09/17/Moment%20Of%20Inertia</id><content type="html" xml:base="http://localhost:4000/physics/2017/09/17/Moment-Of-Inertia.html">&lt;p&gt;While adding physics support to my voxel engine I needed a reasonable accurate &amp;amp; fast method to calculate the moment of inertia, volume, and center of mass for an arbitrary distance field.&lt;/p&gt;
+&lt;p&gt;This was all run on a Haswell i7, newer chips might perform differently.&lt;/p&gt;
+
+&lt;div class=&quot;PageNavigation&quot;&gt;
+  
+    &lt;a class=&quot;prev&quot; href=&quot;/physics/2017/09/17/Moment-Of-Inertia.html&quot;&gt;&amp;laquo; Moment of Inertia for a Distance Field&lt;/a&gt;
+  
+  
+    &lt;a class=&quot;next&quot; href=&quot;/gpu/2017/10/28/Barycentric.html&quot;&gt;Barycentric Coordinates in Pixel Shader &amp;raquo;&lt;/a&gt;
+  
+&lt;/div&gt;</content><author><name></name></author><summary type="html">Masked Gather vs Unmasked Gather</summary></entry><entry><title type="html">Moment of Inertia for a Distance Field</title><link href="https://niadb.github.io/physics/2017/09/17/Moment-Of-Inertia.html" rel="alternate" type="text/html" title="Moment of Inertia for a Distance Field" /><published>2017-09-17T11:20:08-06:00</published><updated>2017-09-17T11:20:08-06:00</updated><id>https://niadb.github.io/physics/2017/09/17/Moment%20Of%20Inertia</id><content type="html" xml:base="https://niadb.github.io/physics/2017/09/17/Moment-Of-Inertia.html">&lt;p&gt;While adding physics support to my voxel engine I needed a reasonable accurate &amp;amp; fast method to calculate the moment of inertia, volume, and center of mass for an arbitrary distance field.&lt;/p&gt;
 
 &lt;p&gt;I’ve written this C++ code to do so.
 Feed it a regularly spaced grid of points and distances.
@@ -322,4 +546,157 @@ If more accuracy is needed, the sample rate can be increased.&lt;/p&gt;
   &lt;span class=&quot;n&quot;&gt;volume&lt;/span&gt;
  &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;</content><author><name></name></author><summary type="html">While adding physics support to my voxel engine I needed a reasonable accurate &amp;amp; fast method to calculate the moment of inertia, volume, and center of mass for an arbitrary distance field.</summary></entry></feed>
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;div class=&quot;PageNavigation&quot;&gt;
+  
+    &lt;a class=&quot;prev&quot; href=&quot;/c++/2017/06/13/SDF-Based-Occlusion-Culling.html&quot;&gt;&amp;laquo; SDF Based Occlusion Culling&lt;/a&gt;
+  
+  
+    &lt;a class=&quot;next&quot; href=&quot;/avx/2017/10/15/AVX2-Gather.html&quot;&gt;AVX2 Gather Performance &amp;raquo;&lt;/a&gt;
+  
+&lt;/div&gt;</content><author><name></name></author><summary type="html">While adding physics support to my voxel engine I needed a reasonable accurate &amp;amp; fast method to calculate the moment of inertia, volume, and center of mass for an arbitrary distance field.</summary></entry><entry><title type="html">SDF Based Occlusion Culling</title><link href="https://niadb.github.io/c++/2017/06/13/SDF-Based-Occlusion-Culling.html" rel="alternate" type="text/html" title="SDF Based Occlusion Culling" /><published>2017-06-13T11:20:08-06:00</published><updated>2017-06-13T11:20:08-06:00</updated><id>https://niadb.github.io/c++/2017/06/13/SDF%20Based%20Occlusion%20Culling</id><content type="html" xml:base="https://niadb.github.io/c++/2017/06/13/SDF-Based-Occlusion-Culling.html">&lt;p&gt;I’m going to describe an occlusion culling algorithm I came up with about 4 or 5 years ago. I use it in my game and it has worked well for me.&lt;/p&gt;
+
+&lt;p&gt;If you do not know what occlusion culling is, it is culling objects that are in the frustum, but are blocked from the users view, and do not contribute to the scene.&lt;/p&gt;
+
+&lt;p&gt;Prior to this I used a Software Rasterizer based implementation, but I found that it was problematic for the following reasons.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;em&gt;Low resolution&lt;/em&gt;: not a huge issue, but it is much lower resolution than the GPU rasterizer so it isn’t completely correct&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;False Occlusion&lt;/em&gt;: since my occluders had to be auto generated at run time from arbitrary SDFs, I used a convex hull approximation which was not always conservative,
+ this caused some false occlusion&lt;/li&gt;
+  &lt;li&gt;&lt;em&gt;Memory&lt;/em&gt;: each occluder had its own set of triangles that needed to be stored. Also meant jumping around in memory to access each of these sets.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;SDF Occlusion Algorithm Overview&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;My scene is represented with triangular patches, each containing perhaps 500 to 2000 triangles. They are approximately equal size in screen space.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://niadb.github.io/assets/patches_show.jpg&quot; alt=&quot;SDFShape2&quot; /&gt;
+  &lt;em&gt;I’ve scaled the patches down here so that we can see gaps between them&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Basically we want to shoot rays from the viewers eye to each patch.&lt;/p&gt;
+
+&lt;p&gt;Because our scene is represented with a signed distance field, we always know the distance to the nearest surface.&lt;/p&gt;
+
+&lt;p&gt;If there is ever a point along the ray where we are inside of something, and the distance to the surface is sufficient to occlude our patch, we know the patch isn’t visible.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Optimizing to make it practical&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The number of patches depends on the settings, but a typical number after frustum culling might be 10,000.&lt;/p&gt;
+
+&lt;p&gt;Shooting 10,000 rays through complex SDFs is quite slow, thankfully it is turns out that each frame is generally very similar to the previous, so we can take advantage of temporal stability.&lt;/p&gt;
+
+&lt;p&gt;Typically I only end up tracing around 100 rays per frame.&lt;/p&gt;
+
+&lt;p&gt;This is done by tracking previous occlusion results, and storing a sphere that represents the most occluded point.&lt;/p&gt;
+
+&lt;p&gt;The next time around, for patches that were occluded, we can quickly retest them without needing the SDF, by using a sphere occludes sphere test.&lt;/p&gt;
+
+&lt;p&gt;If that fails, we can still optimize by starting the ray test near the point of previous occlusion.&lt;/p&gt;
+
+&lt;p&gt;For patches that were previously not occluded, we can actually perform a fairly similar test, if there hasn’t been enough relative movement, there is no need to test the SDF, and we can assume the object is visible.&lt;/p&gt;
+
+&lt;p&gt;I differentiate between dynamic and static parts of the scene, as these temporal tests only work reliable for the static part.&lt;/p&gt;
+
+&lt;p&gt;I also use a timer to set a max time that this tracing process can run per frame.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Other Benefits&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I track an occlusion ratio for each patch, this is between 0 and 1.&lt;/p&gt;
+
+&lt;p&gt;So even if something isn’t completely occluded I can still tell when it is partially occluded.&lt;/p&gt;
+
+&lt;p&gt;I use this occlusion ratio to adjust the priority for patch splitting and generation.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Patches that are completely occluded are never split.&lt;/li&gt;
+  &lt;li&gt;Patches that are partially occluded, have a much lower score/priority, and won’t split until the user gets closer.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Future Work&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Dynamic objects are occluded by static objects, but I haven’t yet added the code for dynamic objects to occlude anything.
+   It isn’t terribly difficult, but I don’t think it will contribute much so I haven’t prioritized that work.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Potential downsides&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;While this algorithm works well for me, this is largely due to the precise way that may engine works, it is probably not well suited to a more typical game engine like Unreal which does not work based on equally sized in screen space triangular patches.&lt;/li&gt;
+  &lt;li&gt;Thin objects don’t occlude as well as a software rasterizer based implementation, this is because it relies on the object having volume&lt;/li&gt;
+  &lt;li&gt;Occluder fusion isn’t the best&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><summary type="html">I’m going to describe an occlusion culling algorithm I came up with about 4 or 5 years ago. I use it in my game and it has worked well for me. If you do not know what occlusion culling is, it is culling objects that are in the frustum, but are blocked from the users view, and do not contribute to the scene.</summary></entry><entry><title type="html">Cluster Culling</title><link href="https://niadb.github.io/c++/2016/10/27/Cluster-Culling.html" rel="alternate" type="text/html" title="Cluster Culling" /><published>2016-10-27T11:20:08-06:00</published><updated>2016-10-27T11:20:08-06:00</updated><id>https://niadb.github.io/c++/2016/10/27/Cluster%20Culling</id><content type="html" xml:base="https://niadb.github.io/c++/2016/10/27/Cluster-Culling.html">&lt;p&gt;AMD’s GPUOpen has an article on &lt;a href=&quot;http://gpuopen.com/geometryfx-1-2-cluster-culling/&quot;&gt;Cluster Culling&lt;/a&gt;
+&lt;img src=&quot;https://3.bp.blogspot.com/-ry8JKYdsmtQ/WG5fpoDbObI/AAAAAAAAGqk/zxwv8Y16KasQUo9UECAn3g5RdPG02N5ZwCLcB/s1600/geometry-fx.png&quot; alt=&quot;Oct16 Global&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Basically for a given mesh cluster, you can often perform a variant of backface culling on the entire cluster.&lt;/p&gt;
+
+&lt;p&gt;You do this by calculating a cone that represents the region in which the cluster is not visible. 
+Any viewer located within the cone, is unable to see the cluster, so it can be culled.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Algorithm overview&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Find the average normal of the cluster&lt;/li&gt;
+  &lt;li&gt;Take the dot product of each normal against the average normal, and find the minimum.&lt;/li&gt;
+  &lt;li&gt;Use this as cone angle, anything greater than 0 can be culled in some situations.&lt;/li&gt;
+  &lt;li&gt;To avoid false occlusion, project the cone direction onto the surface of the AABB&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This is a &lt;a href=&quot;https://en.wikipedia.org/wiki/Smallest-circle_problem&quot;&gt;smallest circle problem&lt;/a&gt;, the AMD solution using the average axis is rarely going to produce the tightest circle.&lt;/p&gt;
+
+&lt;p&gt;For my code I run multiple algorithms, the average, the min/max axis, and then run 1 round of &lt;a href=&quot;https://en.wikipedia.org/wiki/Bounding_sphere#Ritter.27s_bounding_sphere&quot;&gt;ritters method&lt;/a&gt; over the data using whichever axis was the best. The average axis is pretty bad generally, so even just using min/max axis is a good improvement.&lt;/p&gt;
+
+&lt;p&gt;If you want an exact algorithm, you could try this &lt;a href=&quot;http://www.flipcode.com/archives/Smallest_Enclosing_Spheres.shtml&quot;&gt;method&lt;/a&gt;, although it will be slower to calculate.&lt;/p&gt;
+
+&lt;p&gt;The cull rate various heavily depending on the scene. It is more effective with smaller cluster sizes.&lt;/p&gt;
+
+&lt;p&gt;In my application the cluster cull rate varies, sometimes it is only 1%, but I have seen it go up to around 15%.&lt;/p&gt;
+
+&lt;p&gt;I do not generate clusters if they are outside the frustum or occluded, which reduces opportunities for culling. 
+In a standard game engine with offline generated content the cull rate would likely be higher.&lt;/p&gt;
+
+&lt;p&gt;Here is my  C++ reference implementation&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c--&quot; data-lang=&quot;c++&quot;&gt;&lt;span class=&quot;c1&quot;&gt;//For a given chunk this represents a cone in which it is visible
+//Basically the avg normal, and then the max diff recorded from that normal by any of its verts.
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DirectionalOcclusion&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;DirectionalOcclusion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;avg_norm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_inverse_cone_direction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;avg_norm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dot&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;_coneAngleCosine&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sqrtf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dot&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;c1&quot;&gt;//This is the inverse of the actual cone's normals
+&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_inverse_cone_direction&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.0&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+	&lt;span class=&quot;c1&quot;&gt;//This is the dot product of the angles if negative, as this is an invalid state
+&lt;/span&gt;	&lt;span class=&quot;c1&quot;&gt;//if positive it is actually: sqrt(1 - dot*dot), this is because we can see the cone at 90* angles from its maximum dot product
+&lt;/span&gt;	&lt;span class=&quot;c1&quot;&gt;//Type sqrt(?1-?x*?x) in google to see the graph.
+&lt;/span&gt;	&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;_coneAngleCosine&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+	 &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;isInvalidCone&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_coneAngleCosine&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; 
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	 &lt;span class=&quot;c1&quot;&gt;//Returns: true if AABB is occluded 
+&lt;/span&gt;	 &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsAABBOccluded&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;viewPos&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aabb_center&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aabb_ext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		 &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isInvalidCone&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			 &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+		 &lt;span class=&quot;c1&quot;&gt;//move point to surface of AABB away from cone direction. 
+&lt;/span&gt;		 &lt;span class=&quot;c1&quot;&gt;//This is to prevent false occlusion
+&lt;/span&gt;		 &lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aabb_surf&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_inverse_cone_direction&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aabb_ext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+		 &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsPointInConeImp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;viewPos&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aabb_center&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;aabb_surf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	 &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;
+	 &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsPointInConeImp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;viewPos&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;adjusted_center&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;c1&quot;&gt;//get vector to viewer, and inverse of cones normal
+&lt;/span&gt;		&lt;span class=&quot;c1&quot;&gt;//if dot is &amp;gt; our viewers cone(+ 90 angles), that means we cannot see the object.
+&lt;/span&gt;		 &lt;span class=&quot;n&quot;&gt;Vec3sp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;toViewer&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;viewPos&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;adjusted_center&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		 &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;toViewer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;				
+		 &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nDv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_inverse_cone_direction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;toViewer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+		 &lt;span class=&quot;c1&quot;&gt;//we scale the cos angle up, instead of normalizing toViewer  
+&lt;/span&gt;		 &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nDv&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_coneAngleCosine&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;l&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;</content><author><name></name></author><summary type="html">AMD’s GPUOpen has an article on Cluster Culling</summary></entry></feed>

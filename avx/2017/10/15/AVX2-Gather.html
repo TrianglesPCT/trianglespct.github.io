@@ -10,7 +10,7 @@
   <meta name="description" content="Masked Gather vs Unmasked Gather">
 
   <link rel="stylesheet" href="/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/avx/2017/10/15/AVX2-Gather.html">
+  <link rel="canonical" href="https://niadb.github.io/avx/2017/10/15/AVX2-Gather.html">
   <link rel="alternate" type="application/rss+xml" title="Comehither" href="/feed.xml">
   
   
@@ -46,7 +46,7 @@
           
             
             
-            <a class="page-link" href="/pages/Normals.html">A page</a>
+            <a class="page-link" href="/pages/VoxelEngine.html">Voxel Engine</a>
             
           
             
@@ -80,15 +80,15 @@
   </header>
 
   <div class="post-content" itemprop="articleBody">
-    <p>Masked Gather vs Unmasked Gather</p>
+    <p><strong>Masked Gather vs Unmasked Gather</strong></p>
 
-<p>AVX2 has masked gather instructions(_mm_mask_i32gather_epi32 etc), these have two additional parameters, a mask, and a default value that is used when the mask is false.</p>
+<p>AVX2 has masked gather instructions(<a href="https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_mask_i32gather_epi32&amp;expand=2810,2810">_mm_mask_i32gather_epi32</a> etc), these have two additional parameters, a mask, and a default value that is used when the mask is false.</p>
 
 <p>I was hoping masked gathers would be accelerated, such that when most of the lanes were masked off, the gather would complete sooner, but this does not appear to be the case.</p>
 
 <p>The performance of masked and unmasked gathers was very similar, but masked gathers were consistently slower than unmasked gathers.</p>
 
-<p>Load vs Gather vs Software Gather</p>
+<p><strong>Load vs Gather vs Software Gather</strong></p>
 
 <p>To compare gather with load, I created a buffer and run through it in linear order summing the values.
  I forced the gathers to load from the same indices the load was operating on.  Indices(0,1,2,3,4,5,6,7), incremented by 8 for each loop.</p>
@@ -96,7 +96,7 @@
 <p>Software gather loaded each index using scalar loads instead of the hardware intrinsics.
 Gather was generally ~1.2-1.5x faster than software gather.</p>
 
-<p>Performance was depended upon the cache level that buffer fit into.</p>
+<p><em>Performance was depended upon the cache level that buffer fit into.</em></p>
 
 <p>Buffer fits in L1</p>
 
@@ -110,7 +110,16 @@ Gather was generally ~1.2-1.5x faster than software gather.</p>
 
 <p>Load tapers off to ~2.x faster than Gather</p>
 
-<p>This was all run on a Haswell, newer chips might perform differently.</p>
+<p>This was all run on a Haswell i7, newer chips might perform differently.</p>
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/physics/2017/09/17/Moment-Of-Inertia.html">&laquo; Moment of Inertia for a Distance Field</a>
+  
+  
+    <a class="next" href="/gpu/2017/10/28/Barycentric.html">Barycentric Coordinates in Pixel Shader &raquo;</a>
+  
+</div>
 
   </div>
 
@@ -142,8 +151,8 @@ Gather was generally ~1.2-1.5x faster than software gather.</p>
         <ul class="social-media-list">
           
           <li>
-            <a href="https://github.com/trianglespct"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
-</span><span class="username">trianglespct</span></a>
+            <a href="https://github.com/niadb"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">niadb</span></a>
 
           </li>
           
@@ -153,7 +162,7 @@ Gather was generally ~1.2-1.5x faster than software gather.</p>
       </div>
 
       <div class="footer-col footer-col-3">
-        <p>Game Dev, Programming, SIMD, GPU</p>
+        <p>Game Dev, Programming, SIMD, GPU, Voxels</p>
       </div>
     </div>
 

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>SDF Based Occlusion Culling</title>
+  <meta name="description" content="I’m going to describe an occlusion culling algorithm I came up with about 4 or 5 years ago. I use it in my game and it has worked well for me. If you do not ...">
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="canonical" href="https://niadb.github.io/c++/2017/06/13/SDF-Based-Occlusion-Culling.html">
+  <link rel="alternate" type="application/rss+xml" title="Comehither" href="/feed.xml">
+  
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" href="/">Comehither</a>
+  
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/pages/VoxelEngine.html">Voxel Engine</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">SDF Based Occlusion Culling</h1>
+    <p class="post-meta">
+      <time datetime="2017-06-13T11:20:08-06:00" itemprop="datePublished">
+        
+        Jun 13, 2017
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>I’m going to describe an occlusion culling algorithm I came up with about 4 or 5 years ago. I use it in my game and it has worked well for me.</p>
+
+<p>If you do not know what occlusion culling is, it is culling objects that are in the frustum, but are blocked from the users view, and do not contribute to the scene.</p>
+
+<p>Prior to this I used a Software Rasterizer based implementation, but I found that it was problematic for the following reasons.</p>
+
+<ul>
+  <li><em>Low resolution</em>: not a huge issue, but it is much lower resolution than the GPU rasterizer so it isn’t completely correct</li>
+  <li><em>False Occlusion</em>: since my occluders had to be auto generated at run time from arbitrary SDFs, I used a convex hull approximation which was not always conservative,
+ this caused some false occlusion</li>
+  <li><em>Memory</em>: each occluder had its own set of triangles that needed to be stored. Also meant jumping around in memory to access each of these sets.</li>
+</ul>
+
+<p><strong>SDF Occlusion Algorithm Overview</strong></p>
+
+<p>My scene is represented with triangular patches, each containing perhaps 500 to 2000 triangles. They are approximately equal size in screen space.</p>
+
+<p><img src="https://niadb.github.io/assets/patches_show.jpg" alt="SDFShape2" />
+  <em>I’ve scaled the patches down here so that we can see gaps between them</em></p>
+
+<p>Basically we want to shoot rays from the viewers eye to each patch.</p>
+
+<p>Because our scene is represented with a signed distance field, we always know the distance to the nearest surface.</p>
+
+<p>If there is ever a point along the ray where we are inside of something, and the distance to the surface is sufficient to occlude our patch, we know the patch isn’t visible.</p>
+
+<p><strong>Optimizing to make it practical</strong></p>
+
+<p>The number of patches depends on the settings, but a typical number after frustum culling might be 10,000.</p>
+
+<p>Shooting 10,000 rays through complex SDFs is quite slow, thankfully it is turns out that each frame is generally very similar to the previous, so we can take advantage of temporal stability.</p>
+
+<p>Typically I only end up tracing around 100 rays per frame.</p>
+
+<p>This is done by tracking previous occlusion results, and storing a sphere that represents the most occluded point.</p>
+
+<p>The next time around, for patches that were occluded, we can quickly retest them without needing the SDF, by using a sphere occludes sphere test.</p>
+
+<p>If that fails, we can still optimize by starting the ray test near the point of previous occlusion.</p>
+
+<p>For patches that were previously not occluded, we can actually perform a fairly similar test, if there hasn’t been enough relative movement, there is no need to test the SDF, and we can assume the object is visible.</p>
+
+<p>I differentiate between dynamic and static parts of the scene, as these temporal tests only work reliable for the static part.</p>
+
+<p>I also use a timer to set a max time that this tracing process can run per frame.</p>
+
+<p><strong>Other Benefits</strong></p>
+
+<p>I track an occlusion ratio for each patch, this is between 0 and 1.</p>
+
+<p>So even if something isn’t completely occluded I can still tell when it is partially occluded.</p>
+
+<p>I use this occlusion ratio to adjust the priority for patch splitting and generation.</p>
+
+<ul>
+  <li>Patches that are completely occluded are never split.</li>
+  <li>Patches that are partially occluded, have a much lower score/priority, and won’t split until the user gets closer.</li>
+</ul>
+
+<p><strong>Future Work</strong></p>
+
+<p>Dynamic objects are occluded by static objects, but I haven’t yet added the code for dynamic objects to occlude anything.
+   It isn’t terribly difficult, but I don’t think it will contribute much so I haven’t prioritized that work.</p>
+
+<p><strong>Potential downsides</strong></p>
+
+<ul>
+  <li>While this algorithm works well for me, this is largely due to the precise way that may engine works, it is probably not well suited to a more typical game engine like Unreal which does not work based on equally sized in screen space triangular patches.</li>
+  <li>Thin objects don’t occlude as well as a software rasterizer based implementation, this is because it relies on the object having volume</li>
+  <li>Occluder fusion isn’t the best</li>
+</ul>
+
+
+  </div>
+
+  
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Comehither</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>
+            
+              Comehither
+            
+            </li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/niadb"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">niadb</span></a>
+
+          </li>
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Game Dev, Programming, SIMD, GPU, Voxels</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
